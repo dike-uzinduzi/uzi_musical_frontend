@@ -13,7 +13,7 @@ import { NavLink } from "react-router-dom";
 
 const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
   const sidebarItems = [
-    { icon: Home, label: "Home", path: "/" },
+    { icon: Home, label: "Home", path: "/home" },
     { icon: Disc3, label: "Albums", path: "/albums" },
     { icon: Award, label: "Plaques", path: "/plaques" },
     { icon: Newspaper, label: "News and Updates", path: "/news" },
