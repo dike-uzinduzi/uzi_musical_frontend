@@ -65,7 +65,7 @@ const AlbumScreen = () => {
       tracks: 10,
       description: "Pulsing synth beats and vibrant energy inspired by neon-lit city nights.",
       image: "https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?w=400&h=400&fit=crop",
-      color: "from-cyan-500 to-blue-500",
+      color: "from-cyan-500 to-red-500",
       rating: "4.8",
     },
     {
@@ -143,7 +143,7 @@ const AlbumScreen = () => {
                   <div className={`text-xs ${themeClasses.textSecondary}`}>Admin</div>
                 </div>
                 <div className="relative">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
                     <span className="text-white font-semibold text-sm">
                       {userName.split(" ").map((n) => n[0]).join("")}
                     </span>
@@ -165,7 +165,7 @@ const AlbumScreen = () => {
                 onClick={() => setActiveTab(tab as "collection")}
                 className={`capitalize px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
                   activeTab === tab
-                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
+                    ? "bg-gradient-to-r from-red-500 to-indigo-500 text-white shadow-md"
                     : `${themeClasses.textSecondary} hover:bg-slate-100`
                 }`}
               >

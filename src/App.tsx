@@ -7,6 +7,7 @@ import CreateAccountScreen from "./pages/createaccount";
 import AlbumGallery from "./pages/Album";
 import Landingpage from "./pages/landing_page";
 import MusicNewsScreen from "./pages/news";
+import MusicActivitiesScreen from "./pages/Activities";
 
 import Plaques from "./pages/Plaques";
 import ProfileScreen from "./pages/Profil";
@@ -22,6 +23,7 @@ function App() {
           <Route path="/home" element={<HomeScreen />} />
           <Route path="/albums" element={<AlbumGallery />} />
           <Route path="/news" element={<MusicNewsScreen/>} />
+          <Route path="/activities" element={<MusicActivitiesScreen/>} />
 
           <Route path="/" element={<HomeScreen />} />
           <Route path="/plaques" element={<Plaques />} />

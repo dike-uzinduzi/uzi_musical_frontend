@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Music, TrendingUp, Calendar, Clock, Play, Heart, Share2, MessageCircle, Menu, ChevronDown, X } from 'lucide-react';
+import { useState } from 'react';
+import { TrendingUp, Calendar, Clock, Play, Heart, Share2, MessageCircle, Menu, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/sidebar';
 
