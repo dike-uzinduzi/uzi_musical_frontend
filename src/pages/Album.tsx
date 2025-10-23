@@ -128,31 +128,31 @@ const AlbumScreen = () => {
               >
                 <Menu className={`w-5 h-5 ${themeClasses.textSecondary}`} />
               </button>
+
               <div className="flex items-center space-x-3">
                 <span className={themeClasses.textSecondary}>Home</span>
                 <span className="text-slate-400">›</span>
                 <span className={`${themeClasses.text} font-medium`}>Albums</span>
               </div>
             </div>
-             </div>
 
-
-            {/* User Info */}
+            {/* User */}
             <div className="flex items-center space-x-4">
               <div className={`flex items-center space-x-3 pl-4 border-l ${themeClasses.border}`}>
                 <div className="text-right hidden sm:block">
                   <div className={`text-sm font-semibold ${themeClasses.text}`}>{userName}</div>
                   <div className={`text-xs ${themeClasses.textSecondary}`}>Admin</div>
                 </div>
+
                 <div className="relative">
-                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                  <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
                     <span className="text-white font-semibold text-sm">
                       {userName.split(" ").map((n) => n[0]).join("")}
                     </span>
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
                 </div>
+
                 <ChevronDown className={`w-4 h-4 ${themeClasses.textSecondary}`} />
               </div>
             </div>
@@ -162,14 +162,13 @@ const AlbumScreen = () => {
         {/* Scrollable content */}
         <main className="flex-1 overflow-y-auto scroll-smooth pt-[84px] pb-8 pr-4 sm:pr-6">
           <div className="flex space-x-4 pb-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-opacity-80 backdrop-blur-md z-10">
-            {["collection" ].map((tab) => (
+            {["collection"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as "collection")}
                 className={`capitalize px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
                   activeTab === tab
-                    ? "bg-gradient-to-r from-red-500 to-indigo-500 text-white shadow-md"
-                    ? "bg-linear-to-r from-blue-500 to-indigo-500 text-white shadow-md"
+                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md"
                     : `${themeClasses.textSecondary} hover:bg-slate-100`
                 }`}
               >
@@ -226,7 +225,7 @@ const AlbumScreen = () => {
                         alt={album.title}
                         className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
                       <div className="absolute bottom-4 left-4 text-white">
                         <h3 className="text-lg font-bold">{album.title}</h3>
                         <p className="text-sm opacity-80">{album.artist}</p>
