@@ -2,31 +2,48 @@ import { useState, useEffect } from "react";
 import {
   Menu,
   ChevronDown,
-  DollarSign,
+  Calendar,
+  Music,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../components/sidebar";
 import { useNavigate } from "react-router-dom";
 import albumService from "../services/album_service"; 
 
+interface Artist {
+  _id: string;
+  name: string;
+}
+
+interface Genre {
+  _id: string;
+  name: string;
+}
+
 interface Album {
-  id: number;
+  _id: string;
+  artist: Artist | string; 
   title: string;
-  artist: string;
-  genre: string;
-  cost: number;
-  releaseDate: string;
-  tracks: number;
-  description: string;
-  image: string;
-  color: string;
-  rating: string;
+  release_date: string;
+  genre?: Genre | string; 
+  cover_art?: string;
+  description?: string;
+  track_count: number;
+  copyright_info?: string;
+  publisher?: string;
+  credits?: string;
+  affiliation?: string;
+  duration?: number;
+  is_published: boolean;
+  is_featured: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ApiResponse {
   data?: Album[];
   albums?: Album[];
-  // Add other possible response properties based on your API
 }
 
 const AlbumScreen = () => {
@@ -62,28 +79,25 @@ const AlbumScreen = () => {
         let albumsData: Album[] = [];
         
         if (Array.isArray(response)) {
-          // If response is directly an array
           albumsData = response;
         } else if (response.data && Array.isArray(response.data)) {
-          // If response has a data property that contains the array
           albumsData = response.data;
         } else if (response.albums && Array.isArray(response.albums)) {
-          // If response has an albums property that contains the array
           albumsData = response.albums;
-        } else if (Array.isArray(response)) {
-          // If the response itself is the array
-          albumsData = response;
         } else {
           console.warn("Unexpected API response structure:", response);
           albumsData = [];
         }
+        
+        // Filter out deleted albums
+        albumsData = albumsData.filter(album => !album.is_deleted);
         
         setAlbums(albumsData);
         setError(null);
       } catch (err) {
         setError("Failed to fetch albums. Please try again later.");
         console.error("Error fetching albums:", err);
-        setAlbums([]); // Ensure albums is always an array
+        setAlbums([]);
       } finally {
         setLoading(false);
       }
@@ -92,8 +106,13 @@ const AlbumScreen = () => {
     fetchAlbums();
   }, []);
 
-  // Safe reduce with fallback to empty array
-  const totalSpent = albums?.reduce((sum, album) => sum + (album.cost || 0), 0) || 0;
+  // Helper function to get artist name
+  const getArtistName = (artist: Artist | string): string => {
+    if (typeof artist === 'string') return artist;
+    return artist?.name || 'Unknown Artist';
+  };
+
+  // Helper function to get genre name
 
   const handleAlbumClick = (album: Album) => {
     navigate(`/details1`, { state: { album } });
@@ -159,7 +178,7 @@ const AlbumScreen = () => {
                 </div>
 
                 <div className="relative">
-                  <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+                  <div className="w-10 h-10 bg-linear-to-br from-red-700 to-red-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
                     <span className="text-white font-semibold text-sm">
                       {userName.split(" ").map((n) => n[0]).join("")}
                     </span>
@@ -182,7 +201,7 @@ const AlbumScreen = () => {
                 onClick={() => setActiveTab(tab as "collection")}
                 className={`capitalize px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
                   activeTab === tab
-                    ? "bg-linear-to-r from-blue-500 to-indigo-500 text-white shadow-md"
+                    ? "bg-linear-to-r from-red-700 to-red-500 text-white shadow-md"
                     : `${themeClasses.textSecondary} hover:bg-slate-100`
                 }`}
               >
@@ -213,11 +232,11 @@ const AlbumScreen = () => {
                   </div>
                   <div className={`${themeClasses.card} backdrop-blur-sm border ${themeClasses.border} rounded-2xl px-6 py-4`}>
                     <div className="flex items-center space-x-2">
-                      <DollarSign className="w-5 h-5 text-green-500" />
+                      <Music className="w-5 h-5 text-blue-500" />
                       <div>
-                        <p className={`text-xs ${themeClasses.textSecondary}`}>Total Spent</p>
+                        <p className={`text-xs ${themeClasses.textSecondary}`}>Total Albums</p>
                         <p className={`text-2xl font-bold ${themeClasses.text}`}>
-                          ${totalSpent.toFixed(2)}
+                          {albums.length}
                         </p>
                       </div>
                     </div>
@@ -251,21 +270,35 @@ const AlbumScreen = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {albums.map((album) => (
                       <motion.div
-                        key={album.id}
+                        key={album._id}
                         whileHover={{ scale: 1.02 }}
                         transition={{ type: "spring", stiffness: 300 }}
                         className={`cursor-pointer group relative overflow-hidden rounded-2xl ${themeClasses.card} border ${themeClasses.border} backdrop-blur-sm hover:shadow-2xl`}
                         onClick={() => handleAlbumClick(album)}
                       >
                         <img
-                          src={album.image}
+                          src={album.cover_art || '/placeholder-album.jpg'}
                           alt={album.title}
                           className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-album.jpg';
+                          }}
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
-                        <div className="absolute bottom-4 left-4 text-white">
-                          <h3 className="text-lg font-bold">{album.title}</h3>
-                          <p className="text-sm opacity-80">{album.artist}</p>
+                        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                          <h3 className="text-lg font-bold truncate">{album.title}</h3>
+                          <p className="text-sm opacity-80 truncate">{getArtistName(album.artist)}</p>
+                          <div className="flex items-center justify-between mt-2 text-xs opacity-70">
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{new Date(album.release_date).getFullYear()}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Music className="w-3 h-3" />
+                              <span>{album.track_count} tracks</span>
+                            </div>
+                          </div>
                         </div>
                       </motion.div>
                     ))}

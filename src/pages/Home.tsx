@@ -33,13 +33,29 @@ const HomeScreen = () => {
   type Album = {
     _id?: string;
     title: string;
-    artistName: string;
-    genre: string;
-    albumArt: string;
-    releaseDate: string;
-    totalTracks: number;
+    artist:
+      | {
+          _id: string;
+          name: string;
+        }
+      | string;
+    genre:
+      | {
+          _id: string;
+          name: string;
+        }
+      | string;
+    cover_art: string;
+    release_date: string;
+    track_count: number;
     description?: string;
-    isFeatured?: boolean;
+    is_featured?: boolean;
+    copyright_info?: string;
+    publisher?: string;
+    credits?: string;
+    affiliation?: string;
+    duration?: number;
+    is_published?: boolean;
     color: string;
   };
 
@@ -47,7 +63,7 @@ const HomeScreen = () => {
   const preloadImages = useCallback((albums: Album[]) => {
     albums.forEach((album) => {
       const img = new Image();
-      img.src = album.albumArt;
+      img.src = album.cover_art;
     });
   }, []);
 
@@ -82,10 +98,15 @@ const HomeScreen = () => {
   const totalAlbums = albums?.length || 0;
   const totalArtists =
     albums?.length > 0
-      ? new Set(albums.map((album) => album.artistName)).size
+      ? new Set(
+          albums.map((album) =>
+            typeof album.artist === "string" ? album.artist : album.artist?.name
+          )
+        ).size
       : 0;
   const totalTracks =
-    albums?.reduce((sum, album) => sum + (album.totalTracks || 0), 0) || 0;
+    albums?.reduce((sum, album) => sum + (album.track_count || 0), 0) || 0;
+
   const totalStreams = 2456789;
 
   const firstName = "John Doe";
@@ -106,8 +127,8 @@ const HomeScreen = () => {
   };
 
   // Calculate time remaining until release
-  const calculateTimeRemaining = (releaseDate: string) => {
-    const release = new Date(releaseDate).getTime();
+  const calculateTimeRemaining = (release_date: string) => {
+    const release = new Date(release_date).getTime();
     const now = new Date().getTime();
     const difference = release - now;
 
@@ -125,7 +146,6 @@ const HomeScreen = () => {
       isReleased: false,
     };
   };
-
   // Mock albums data with release dates - aligned with Album model
 
   // Fetch albums from API
@@ -172,14 +192,24 @@ const HomeScreen = () => {
       }
 
       const lowercasedQuery = query.toLowerCase().trim();
-      const filtered = albums.filter(
-        (album) =>
+      const filtered = albums.filter((album) => {
+        const artistName =
+          typeof album.artist === "string"
+            ? album.artist
+            : album.artist?.name || "";
+        const genreName =
+          typeof album.genre === "string"
+            ? album.genre
+            : album.genre?.name || "";
+
+        return (
           album.title.toLowerCase().includes(lowercasedQuery) ||
-          album.artistName.toLowerCase().includes(lowercasedQuery) ||
-          album.genre.toLowerCase().includes(lowercasedQuery) ||
+          artistName.toLowerCase().includes(lowercasedQuery) ||
+          genreName.toLowerCase().includes(lowercasedQuery) ||
           (album.description &&
             album.description.toLowerCase().includes(lowercasedQuery))
-      );
+        );
+      });
 
       setFilteredAlbums(filtered);
     },
@@ -192,7 +222,7 @@ const HomeScreen = () => {
     setIsSearching(false);
   };
 
-  const featuredAlbum = albums.find((album) => album.isFeatured);
+  const featuredAlbum = albums.find((album) => album.is_featured);
 
   const metrics = [
     {
@@ -281,7 +311,7 @@ const HomeScreen = () => {
       const newTimeRemaining: { [key: string]: any } = {};
       albums.forEach((album) => {
         newTimeRemaining[album.title] = calculateTimeRemaining(
-          album.releaseDate
+          album.release_date
         );
       });
       setTimeRemaining(newTimeRemaining);
@@ -291,7 +321,7 @@ const HomeScreen = () => {
     const interval = setInterval(updateCountdowns, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [albums]);
 
   // Preload images on component mount
   useEffect(() => {
@@ -439,7 +469,9 @@ const HomeScreen = () => {
                         {featuredAlbum.title}
                       </h2>
                       <p className="text-white/80 text-sm">
-                        {featuredAlbum.artistName}
+                        {typeof featuredAlbum.artist === "string"
+                          ? featuredAlbum.artist
+                          : featuredAlbum.artist?.name}
                       </p>
                     </div>
                   </div>
@@ -633,7 +665,7 @@ const HomeScreen = () => {
                         {/* Album Image */}
                         <div className="relative h-48 sm:h-56 overflow-hidden">
                           <img
-                            src={album.albumArt}
+                            src={album.cover_art}
                             alt={album.title}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             loading="lazy"
@@ -654,7 +686,9 @@ const HomeScreen = () => {
                             <span
                               className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-semibold text-white bg-black/50 backdrop-blur-md`}
                             >
-                              {album.genre}
+                              {typeof album.genre === "string"
+                                ? album.genre
+                                : album.genre?.name || "Unknown"}
                             </span>
                           </div>
                         </div>
@@ -669,7 +703,9 @@ const HomeScreen = () => {
                           <p
                             className={`text-xs sm:text-sm ${themeClasses.textSecondary} mb-3 line-clamp-1`}
                           >
-                            {album.artistName}
+                            {typeof album.artist === "string"
+                              ? album.artist
+                              : album.artist?.name}
                           </p>
 
                           {/* Album Stats */}
@@ -679,7 +715,7 @@ const HomeScreen = () => {
                                 className={`w-3 h-3 ${themeClasses.textSecondary}`}
                               />
                               <span className={themeClasses.textSecondary}>
-                                {album.totalTracks} tracks
+                                {album.track_count} tracks
                               </span>
                             </div>
                             <div className="flex items-center space-x-1">
@@ -688,7 +724,7 @@ const HomeScreen = () => {
                               />
                               <span className={themeClasses.textSecondary}>
                                 {new Date(
-                                  album.releaseDate
+                                  album.release_date
                                 ).toLocaleDateString()}
                               </span>
                             </div>
