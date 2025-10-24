@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import Swal from 'sweetalert2';
+import userService from '../services/login_service';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -17,14 +19,32 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      if (email === 'admin@example.com' && password === '123') {
-        localStorage.setItem('authToken', 'dummy-token');
-        navigate('/home');
-      } else {
-        setError('Invalid email or password');
-      }
-    } catch (err) {
-      setError('An unexpected error occurred');
+      // Call the login service
+      const response = await userService.login({ email, password });
+      
+      // Show success alert
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Successful!',
+        text: 'Redirecting to home...',
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true,
+      });
+
+      // Navigate to home
+      navigate('/home');
+    } catch (err: any) {
+      // Handle error response
+      const errorMessage = err.response?.data?.message || 'Invalid email or password';
+      setError(errorMessage);
+      
+      // Show error alert
+      await Swal.fire({
+        icon: 'error',
+        title: 'Login Failed',
+        text: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
