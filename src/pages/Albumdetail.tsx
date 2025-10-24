@@ -186,7 +186,7 @@ const AlbumDetailScreen = () => {
                 </div>
 
                 <div className="relative">
-                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25">
+                  <div className="w-10 h-10 bg-linear-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25">
                     <span className="text-white font-semibold text-sm">
                       {userName.split(" ").map((n) => n[0]).join("")}
                     </span>
@@ -202,7 +202,7 @@ const AlbumDetailScreen = () => {
 
         {/* Album Hero Section */}
         <div className="pt-[84px] flex-1 overflow-y-auto">
-          <div className={`relative h-80 sm:h-96 bg-gradient-to-r from-red-400 via-red-500 to-red-600 flex items-end`}>
+          <div className={`relative h-80 sm:h-96 bg-linear-to-r from-red-400 via-red-500 to-red-600 flex items-end`}>
             <div className="absolute inset-0 bg-black/40" />
             <div className="relative z-10 w-full p-6 sm:p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6">

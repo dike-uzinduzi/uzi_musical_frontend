@@ -29,91 +29,163 @@ const PlaquesScreen = () => {
     header: isDarkMode ? "bg-gray-800/80" : "bg-white/80",
   };
 
-  // Mock plaques data
+  // Mock plaques data - updated to match PlaquePurchased model
   const plaques = [
     {
       id: 1,
+      albumId: "album_1",
+      plaqueType: "Gold Plaque",
+      plaqueImage:
+        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop",
+      amount: 299.99,
+      paymentMethod: "card",
+      paymentStatus: "paid",
+      shippingAddress: {
+        line1: "123 Music Street",
+        line2: "Apt 4B",
+        city: "Los Angeles",
+        state: "CA",
+        postalCode: "90001",
+        country: "USA",
+      },
+      // Additional fields for display (not in model)
       name: "Midnight Dreams",
       artist: "Luna Eclipse",
       genre: "Electronic",
-      type: "Gold Plaque",
-      cost: 299.99,
-      purchaseDate: "2024-10-15",
       tracks: 12,
-      image:
-        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop",
-      color: "from-purple-500 to-pink-500",
       certification: "500K+ Streams",
+      color: "from-purple-500 to-pink-500",
+      purchaseDate: "2024-10-15",
     },
     {
       id: 2,
+      albumId: "album_2",
+      plaqueType: "Platinum Plaque",
+      plaqueImage:
+        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop",
+      amount: 499.99,
+      paymentMethod: "paypal",
+      paymentStatus: "paid",
+      shippingAddress: {
+        line1: "456 Hip Hop Ave",
+        line2: "",
+        city: "New York",
+        state: "NY",
+        postalCode: "10001",
+        country: "USA",
+      },
+      // Additional fields for display (not in model)
       name: "Urban Rhythms",
       artist: "Street Poets",
       genre: "Hip Hop",
-      type: "Platinum Plaque",
-      cost: 499.99,
-      purchaseDate: "2024-09-20",
       tracks: 15,
-      image:
-        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop",
-      color: "from-orange-500 to-red-500",
       certification: "1M+ Streams",
+      color: "from-orange-500 to-red-500",
+      purchaseDate: "2024-09-20",
     },
     {
       id: 3,
+      albumId: "album_3",
+      plaqueType: "Silver Plaque",
+      plaqueImage:
+        "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop",
+      amount: 199.99,
+      paymentMethod: "card",
+      paymentStatus: "paid",
+      shippingAddress: {
+        line1: "789 Folk Road",
+        line2: "Studio 2",
+        city: "Nashville",
+        state: "TN",
+        postalCode: "37201",
+        country: "USA",
+      },
+      // Additional fields for display (not in model)
       name: "Acoustic Sessions",
       artist: "Sarah Melody",
       genre: "Folk",
-      type: "Silver Plaque",
-      cost: 199.99,
-      purchaseDate: "2024-10-01",
       tracks: 10,
-      image:
-        "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop",
-      color: "from-emerald-500 to-teal-500",
       certification: "250K+ Streams",
+      color: "from-emerald-500 to-teal-500",
+      purchaseDate: "2024-10-01",
     },
     {
       id: 4,
+      albumId: "album_4",
+      plaqueType: "Gold Plaque",
+      plaqueImage:
+        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop",
+      amount: 299.99,
+      paymentMethod: "bank_transfer",
+      paymentStatus: "paid",
+      shippingAddress: {
+        line1: "321 Synth Blvd",
+        line2: "",
+        city: "Miami",
+        state: "FL",
+        postalCode: "33101",
+        country: "USA",
+      },
+      // Additional fields for display (not in model)
       name: "Neon Nights",
       artist: "Synthwave Collective",
       genre: "Synthwave",
-      type: "Gold Plaque",
-      cost: 299.99,
-      purchaseDate: "2024-08-12",
       tracks: 14,
-      image:
-        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop",
-      color: "from-violet-500 to-purple-500",
       certification: "500K+ Streams",
+      color: "from-violet-500 to-purple-500",
+      purchaseDate: "2024-08-12",
     },
     {
       id: 5,
+      albumId: "album_5",
+      plaqueType: "Platinum Plaque",
+      plaqueImage:
+        "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400&h=400&fit=crop",
+      amount: 499.99,
+      paymentMethod: "card",
+      paymentStatus: "paid",
+      shippingAddress: {
+        line1: "654 Jazz Lane",
+        line2: "Suite 500",
+        city: "Chicago",
+        state: "IL",
+        postalCode: "60601",
+        country: "USA",
+      },
+      // Additional fields for display (not in model)
       name: "Jazz After Dark",
       artist: "The Blue Notes",
       genre: "Jazz",
-      type: "Platinum Plaque",
-      cost: 499.99,
-      purchaseDate: "2024-07-28",
       tracks: 11,
-      image:
-        "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=400&h=400&fit=crop",
-      color: "from-blue-500 to-indigo-500",
       certification: "1M+ Streams",
+      color: "from-blue-500 to-indigo-500",
+      purchaseDate: "2024-07-28",
     },
     {
       id: 6,
+      albumId: "album_6",
+      plaqueType: "Diamond Plaque",
+      plaqueImage:
+        "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400&h=400&fit=crop",
+      amount: 799.99,
+      paymentMethod: "card",
+      paymentStatus: "paid",
+      shippingAddress: {
+        line1: "987 Rock Avenue",
+        line2: "Penthouse",
+        city: "Seattle",
+        state: "WA",
+        postalCode: "98101",
+        country: "USA",
+      },
+      // Additional fields for display (not in model)
       name: "Rock Anthems",
       artist: "Thunder Road",
       genre: "Rock",
-      type: "Diamond Plaque",
-      cost: 799.99,
-      purchaseDate: "2024-06-15",
       tracks: 13,
-      image:
-        "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=400&h=400&fit=crop",
-      color: "from-red-500 to-orange-500",
       certification: "5M+ Streams",
+      color: "from-red-500 to-orange-500",
+      purchaseDate: "2024-06-15",
     },
   ];
 
@@ -132,7 +204,7 @@ const PlaquesScreen = () => {
     }
   };
 
-  const totalSpent = plaques.reduce((sum, plaque) => sum + plaque.cost, 0);
+  const totalSpent = plaques.reduce((sum, plaque) => sum + plaque.amount, 0);
 
   return (
     <div
@@ -267,24 +339,22 @@ const PlaquesScreen = () => {
                 className={`group relative overflow-hidden rounded-xl sm:rounded-2xl ${themeClasses.card} backdrop-blur-sm border ${themeClasses.border} hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]`}
               >
                 {/* Plaque Badge */}
-                <div className="absolute top-3 left-3 z-10">
-                  <div
-                    className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-linear-to-r ${getPlaqueColor(
-                      plaque.type
-                    )} shadow-lg`}
-                  >
-                    <Award className="w-3.5 h-3.5" />
-                    <span>{plaque.type}</span>
-                  </div>
+                <div
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-linear-to-r ${getPlaqueColor(
+                    plaque.plaqueType // Changed from plaque.type
+                  )} shadow-lg`}
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  <span>{plaque.plaqueType}</span> // Changed from plaque.type
                 </div>
-
                 {/* Album Image */}
                 <div className="relative h-48 sm:h-56 overflow-hidden">
                   <img
-                    src={plaque.image}
+                    src={plaque.plaqueImage} // Changed from plaque.image
                     alt={plaque.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
+
                   <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent"></div>
 
                   {/* Certification Badge */}
@@ -370,9 +440,7 @@ const PlaquesScreen = () => {
                       <Calendar
                         className={`w-3.5 h-3.5 ${themeClasses.textSecondary}`}
                       />
-                      <span
-                        className={`text-xs ${themeClasses.textSecondary}`}
-                      >
+                      <span className={`text-xs ${themeClasses.textSecondary}`}>
                         {new Date(plaque.purchaseDate).toLocaleDateString(
                           "en-US",
                           { month: "short", day: "numeric", year: "numeric" }
@@ -384,7 +452,7 @@ const PlaquesScreen = () => {
                     >
                       <DollarSign className="w-3.5 h-3.5 text-white" />
                       <span className="text-sm font-bold text-white">
-                        {plaque.cost.toFixed(2)}
+                        {plaque.amount.toFixed(2)} 
                       </span>
                     </div>
                   </div>
