@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Menu,
   ChevronDown,
@@ -11,6 +11,7 @@ import {
 import { motion } from "framer-motion";
 import Sidebar from "../components/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
+import trackService from "../services/tracks_service"; 
 
 interface Album {
   id: number;
@@ -26,9 +27,19 @@ interface Album {
   rating: string;
 }
 
+interface Track {
+  id: number;
+  title: string;
+  duration: string;
+  artist?: string;
+}
+
 const AlbumDetailScreen = () => {
   const [isDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const album = location.state?.album as Album;
@@ -46,6 +57,48 @@ const AlbumDetailScreen = () => {
     header: isDarkMode ? "bg-gray-800/80" : "bg-white/80",
   };
 
+  // Fetch tracks using the track service
+  useEffect(() => {
+    const fetchTracks = async () => {
+      try {
+        setLoading(true);
+        const tracksData = await trackService.getAllTracks();
+        
+        // Transform the API data to match our Track interface
+        const formattedTracks: Track[] = tracksData.map((track: any, index: number) => ({
+          id: track.id || index + 1,
+          title: track.title || track.name || `Track ${index + 1}`,
+          duration: track.duration || `${Math.floor(Math.random() * 4) + 2}:${Math.floor(Math.random() * 60)
+            .toString()
+            .padStart(2, '0')}`,
+          artist: track.artist || album?.artist,
+        }));
+        
+        setTracks(formattedTracks);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching tracks:", err);
+        setError("Failed to load tracks");
+        // Fallback to mock data if API fails
+        const mockTracks = Array.from({ length: album?.tracks || 10 }, (_, i) => ({
+          id: i + 1,
+          title: `Track ${i + 1}`,
+          duration: `${Math.floor(Math.random() * 4) + 2}:${Math.floor(Math.random() * 60)
+            .toString()
+            .padStart(2, '0')}`,
+          artist: album?.artist,
+        }));
+        setTracks(mockTracks);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (album) {
+      fetchTracks();
+    }
+  }, [album]);
+
   if (!album) {
     return (
       <div className={`flex h-screen items-center justify-center ${themeClasses.bg}`}>
@@ -61,14 +114,6 @@ const AlbumDetailScreen = () => {
       </div>
     );
   }
-
-  const trackList = Array.from({ length: album.tracks }, (_, i) => ({
-    id: i + 1,
-    title: `Track ${i + 1}`,
-    duration: `${Math.floor(Math.random() * 4) + 2}:${Math.floor(Math.random() * 60)
-      .toString()
-      .padStart(2, '0')}`,
-  }));
 
   return (
     <div className={`flex h-screen ${themeClasses.bg} relative transition-colors duration-300 overflow-hidden`}>
@@ -205,9 +250,15 @@ const AlbumDetailScreen = () => {
             <div className={`${themeClasses.card} backdrop-blur-sm border ${themeClasses.border} rounded-2xl overflow-hidden`}>
               <div className={`p-6 border-b ${themeClasses.border}`}>
                 <h2 className={`text-2xl font-bold ${themeClasses.text}`}>Track List</h2>
+                {loading && (
+                  <p className={`text-sm ${themeClasses.textSecondary} mt-2`}>Loading tracks...</p>
+                )}
+                {error && (
+                  <p className={`text-sm text-red-500 mt-2`}>{error}</p>
+                )}
               </div>
               <div className="divide-y divide-red-200 dark:divide-red-700">
-                {trackList.map((track, index) => (
+                {tracks.map((track, index) => (
                   <div
                     key={track.id}
                     className="flex items-center justify-between p-4 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors duration-200"
@@ -218,7 +269,7 @@ const AlbumDetailScreen = () => {
                       </span>
                       <div>
                         <h3 className={`font-medium ${themeClasses.text}`}>{track.title}</h3>
-                        <p className={`text-sm ${themeClasses.textSecondary}`}>{album.artist}</p>
+                        <p className={`text-sm ${themeClasses.textSecondary}`}>{track.artist || album.artist}</p>
                       </div>
                     </div>
                     <span className={themeClasses.textSecondary}>{track.duration}</span>
