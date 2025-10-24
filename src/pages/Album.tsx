@@ -3,10 +3,10 @@ import {
   Menu,
   ChevronDown,
   DollarSign,
-  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../components/sidebar";
+import { useNavigate } from "react-router-dom";
 
 interface Album {
   id: number;
@@ -26,7 +26,7 @@ const AlbumScreen = () => {
   const [isDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"collection" | "stats">("collection");
-  const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
+  const navigate = useNavigate();
 
   const userName = "John Doe";
 
@@ -76,7 +76,7 @@ const AlbumScreen = () => {
       cost: 11.99,
       releaseDate: "2024-06-21",
       tracks: 9,
-      description: "Heartfelt acoustic melodies that capture love, loss, and life’s simplicity.",
+      description: "Heartfelt acoustic melodies that capture love, loss, and life's simplicity.",
       image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop",
       color: "from-emerald-500 to-teal-500",
       rating: "4.2",
@@ -84,6 +84,11 @@ const AlbumScreen = () => {
   ];
 
   const totalSpent = albums.reduce((sum, album) => sum + album.cost, 0);
+
+  const handleAlbumClick = (album: Album) => {
+    // All albums go to the same route
+    navigate(`/details1`, { state: { album } });
+  };
 
   return (
     <div className={`flex h-screen ${themeClasses.bg} relative transition-colors duration-300 overflow-hidden`}>
@@ -218,7 +223,7 @@ const AlbumScreen = () => {
                       whileHover={{ scale: 1.02 }}
                       transition={{ type: "spring", stiffness: 300 }}
                       className={`cursor-pointer group relative overflow-hidden rounded-2xl ${themeClasses.card} border ${themeClasses.border} backdrop-blur-sm hover:shadow-2xl`}
-                      onClick={() => setSelectedAlbum(album)}
+                      onClick={() => handleAlbumClick(album)}
                     >
                       <img
                         src={album.image}
@@ -238,120 +243,6 @@ const AlbumScreen = () => {
           </AnimatePresence>
         </main>
       </div>
-
-      {/* FULL ALBUM DETAILS MODAL */}
-      <AnimatePresence>
-        {selectedAlbum && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-          >
-            <motion.div
-              initial={{ y: 40, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 40, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className={`w-full max-w-6xl rounded-2xl ${themeClasses.card} border ${themeClasses.border} shadow-xl overflow-hidden`}
-            >
-              <div className="relative overflow-y-auto max-h-[90vh]">
-                <button
-                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/60 backdrop-blur-sm hover:bg-black/80 transition-all duration-200"
-                  onClick={() => setSelectedAlbum(null)}
-                >
-                  <X className="w-5 h-5 text-white" />
-                </button>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-                  {/* Left Column */}
-                  <div className="lg:col-span-1 space-y-4">
-                    <img
-                      src={selectedAlbum.image}
-                      alt={selectedAlbum.title}
-                      className="w-full aspect-square rounded-xl shadow-2xl"
-                    />
-                    <div>
-                      <h2 className={`text-2xl font-bold ${themeClasses.text} mb-1`}>{selectedAlbum.title}</h2>
-                      <p className={`text-lg ${themeClasses.textSecondary} mb-2`}>{selectedAlbum.artist}</p>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>Contributing Artist:</span>
-                          <span className={themeClasses.text}>{selectedAlbum.artist}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>Album Track Count:</span>
-                          <span className={themeClasses.text}>{selectedAlbum.tracks}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>Album Duration:</span>
-                          <span className={themeClasses.text}>1 Hr 12 Mins 15 Sec</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>Album Affiliation:</span>
-                          <span className={themeClasses.text}>Music Label</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Center Column */}
-                  <div className="lg:col-span-1 text-center">
-                    <h3 className={`text-xl font-bold ${themeClasses.text} mb-1`}>Track 01 of {selectedAlbum.tracks}</h3>
-                    <p className={`text-2xl font-bold ${themeClasses.text} mb-4`}>{selectedAlbum.title}</p>
-                    <p className={`text-sm ${themeClasses.textSecondary} leading-relaxed mb-6`}>{selectedAlbum.description}</p>
-
-                    <div className="space-y-3 text-sm">
-                      <h4 className={`font-bold ${themeClasses.text} text-center mb-3`}>Song Credits</h4>
-                      {[
-                        ["Produced By:", "Producer Name"],
-                        ["Mastered By:", "Master Engineer"],
-                        ["Written By:", "Songwriter"],
-                        ["Featuring:", "Featured Artist"],
-                        ["Backing Vocals:", "Vocal Artists"],
-                        ["Instrumentalists:", "Musicians"],
-                        ["Duration:", "3 mins 45 Sec"],
-                        ["Special Credits:", "Special Thanks"],
-                        ["Release Date:", selectedAlbum.releaseDate],
-                      ].map(([label, value]) => (
-                        <div key={label} className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>{label}</span>
-                          <span className={themeClasses.text}>{value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Right Column */}
-                  <div className="lg:col-span-1 space-y-4">
-                    <img
-                      src={selectedAlbum.image}
-                      alt="Album Award"
-                      className="w-full aspect-square rounded-xl shadow-2xl"
-                    />
-                    <div>
-                      <h3 className={`text-2xl font-bold ${themeClasses.text} text-center mb-4`}>Album Performance</h3>
-                      <div className="space-y-3 text-sm">
-                        {[
-                          ["USD Support:", "$101,512.50"],
-                          ["ZiG Support:", "$1,901,512.50"],
-                          ["Plaque Count:", "125"],
-                          ["Time Left:", "2 Hrs 39 Mins 45 Sec"],
-                        ].map(([label, value]) => (
-                          <div key={label} className="flex justify-between">
-                            <span className={themeClasses.textSecondary}>{label}</span>
-                            <span className={`font-bold ${themeClasses.text}`}>{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

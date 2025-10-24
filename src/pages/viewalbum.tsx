@@ -1,6 +1,7 @@
-import { X } from "lucide-react";
 import { useState } from "react";
-import PaymentModal from "./payment";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import PaymentModal from "../components/home/payment";
 
 interface Album {
   id: number;
@@ -13,22 +14,19 @@ interface Album {
   color: string;
 }
 
-interface AlbumModalProps {
-  album: Album | null;
-  isOpen: boolean;
-  onClose: () => void;
-  isDarkMode?: boolean;
-}
-
-const AlbumModal = ({
-  album,
-  isOpen,
-  onClose,
-  isDarkMode = false,
-}: AlbumModalProps) => {
-  if (!isOpen || !album) return null;
+const AlbumPage = () => {
+  const navigate = useNavigate();
+  useParams();
+  const location = useLocation();
+  const [isDarkMode] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedAmount, setSelectedAmount] = useState(456);
+
+  // Track state
+  const [currentTrack, setCurrentTrack] = useState(1);
+
+  // Get album data from navigation state or fallback
+  const album = location.state?.album as Album | undefined;
 
   const themeClasses = {
     bg: isDarkMode ? "bg-gray-900" : "bg-white",
@@ -37,39 +35,82 @@ const AlbumModal = ({
     border: isDarkMode ? "border-gray-700" : "border-slate-200",
   };
 
-  // Mock track data
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleNextTrack = () => {
+    if (album && currentTrack < album.tracks) {
+      setCurrentTrack(currentTrack + 1);
+    }
+  };
+
+  const handlePrevTrack = () => {
+    if (currentTrack > 1) {
+      setCurrentTrack(currentTrack - 1);
+    }
+  };
+
+  if (!album) {
+    return (
+      <div className={`min-h-screen ${themeClasses.bg} flex items-center justify-center`}>
+        <div className="text-center">
+          <p className={themeClasses.text}>Album not found</p>
+          <button
+            onClick={handleBack}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div
-        className={`relative w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-2xl ${themeClasses.bg} shadow-2xl animate-slideUp`}
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/60 backdrop-blur-sm hover:bg-black/80 transition-all duration-200"
-        >
-          <X className="w-5 h-5 text-white" />
-        </button>
+    <div className={`min-h-screen ${themeClasses.bg} transition-colors duration-300`}>
+      {/* Header */}
+      <header className={`border-b ${themeClasses.border} p-4 sm:p-6`}>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleBack}
+            className={`p-2 rounded-lg ${
+              isDarkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-slate-100 hover:bg-slate-200"
+            } transition-colors duration-200`}
+          >
+            <ArrowLeft className={`w-5 h-5 ${themeClasses.text}`} />
+          </button>
+          <div>
+            <h1 className={`text-xl sm:text-2xl font-bold ${themeClasses.text}`}>
+              {album.name}
+            </h1>
+            <p className={`text-sm ${themeClasses.textSecondary}`}>
+              by {album.artist}
+            </p>
+          </div>
+        </div>
+      </header>
 
-        <div className="overflow-y-auto max-h-[90vh]">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+      {/* Main Content */}
+      <main className="p-4 sm:p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Left Column - Album Cover */}
             <div className="lg:col-span-1">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <img
                   src={album.image}
                   alt={album.name}
                   className="w-full aspect-square rounded-xl shadow-2xl"
                 />
                 <div>
-                  <h2 className={`text-2xl font-bold ${themeClasses.text} mb-1`}>
+                  <h2 className={`text-2xl font-bold ${themeClasses.text} mb-2`}>
                     {album.name}
                   </h2>
-                  <p className={`text-lg ${themeClasses.textSecondary} mb-2`}>
+                  <p className={`text-lg ${themeClasses.textSecondary} mb-4`}>
                     {album.artist}
                   </p>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
                       <span className={themeClasses.textSecondary}>
                         Contributing Artist:
@@ -103,9 +144,9 @@ const AlbumModal = ({
 
             {/* Center Column - Track Details */}
             <div className="lg:col-span-1">
-              <div className="text-center mb-6">
-                <h3 className={`text-xl font-bold ${themeClasses.text} mb-1`}>
-                  Track 01 of {album.tracks}
+              <div className="text-center mb-8">
+                <h3 className={`text-xl font-bold ${themeClasses.text} mb-2`}>
+                  Track {currentTrack} of {album.tracks}
                 </h3>
                 <p className={`text-2xl font-bold ${themeClasses.text} mb-4`}>
                   {album.name}
@@ -115,10 +156,36 @@ const AlbumModal = ({
                 >
                   {album.description}
                 </p>
+
+                {/* Next & Previous Buttons */}
+                <div className="flex justify-center space-x-4 mt-4">
+                  <button
+                    onClick={handlePrevTrack}
+                    disabled={currentTrack === 1}
+                    className={`px-4 py-2 rounded-lg font-bold ${
+                      currentTrack === 1
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-blue-500 text-white hover:bg-blue-600"
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={handleNextTrack}
+                    disabled={currentTrack === album.tracks}
+                    className={`px-4 py-2 rounded-lg font-bold ${
+                      currentTrack === album.tracks
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-blue-500 text-white hover:bg-blue-600"
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-3 text-sm">
-                <h4 className={`font-bold ${themeClasses.text} text-center mb-3`}>
+              <div className="space-y-4 text-sm">
+                <h4 className={`font-bold ${themeClasses.text} text-center mb-4`}>
                   Song Credits
                 </h4>
                 <div className="flex justify-between">
@@ -167,7 +234,7 @@ const AlbumModal = ({
                 </div>
               </div>
 
-              <div className="flex justify-center mt-6">
+              <div className="flex justify-center mt-8">
                 <div className="flex space-x-1">
                   {[...Array(4)].map((_, i) => (
                     <div
@@ -187,7 +254,7 @@ const AlbumModal = ({
 
             {/* Right Column - Album Performance */}
             <div className="lg:col-span-1">
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <img
                   src={album.image}
                   alt="Album Award"
@@ -195,11 +262,11 @@ const AlbumModal = ({
                 />
                 <div>
                   <h3
-                    className={`text-2xl font-bold ${themeClasses.text} text-center mb-4`}
+                    className={`text-2xl font-bold ${themeClasses.text} text-center mb-6`}
                   >
                     Album Performance
                   </h3>
-                  <div className="space-y-3 text-sm">
+                  <div className="space-y-4 text-sm">
                     <div className="flex justify-between">
                       <span className={themeClasses.textSecondary}>
                         USD Support:
@@ -239,7 +306,7 @@ const AlbumModal = ({
           </div>
 
           {/* Bottom Section - Slider and Support Button */}
-          <div className={`border-t ${themeClasses.border} p-6 space-y-4`}>
+          <div className={`border-t ${themeClasses.border} mt-8 pt-8 space-y-6`}>
             <div className="flex items-center space-x-4">
               <input
                 type="range"
@@ -269,19 +336,21 @@ const AlbumModal = ({
               </button>
             </div>
           </div>
-          <PaymentModal
-            isOpen={isPaymentModalOpen}
-            onClose={() => setIsPaymentModalOpen(false)}
-            albumName={album.name}
-            albumArtist={album.artist}
-            albumImage={album.image}
-            supportAmount={selectedAmount}
-            isDarkMode={isDarkMode}
-          />
         </div>
-      </div>
+      </main>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        albumName={album.name}
+        albumArtist={album.artist}
+        albumImage={album.image}
+        supportAmount={selectedAmount}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 };
 
-export default AlbumModal;
+export default AlbumPage;
