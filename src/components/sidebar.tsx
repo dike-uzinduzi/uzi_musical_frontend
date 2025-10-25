@@ -18,7 +18,7 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
     { icon: Award, label: "Plaques", path: "/plaques" },
     { icon: Newspaper, label: "News and Updates", path: "/news" },
     { icon: Activity, label: "Activities", path: "/activities" },
-    { icon: Settings, label: "Settings", path: "/profile" },
+    { icon: Settings, label: "Profile", path: "/profile" },
     { icon: LogOut, label: "Logout", path: "/logout" },
   ];
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Menu,
   ChevronDown,
@@ -7,7 +7,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../components/sidebar";
 import { useNavigate } from "react-router-dom";
-import albumService from "../services/album_service"; // Adjust the import path as needed
 
 interface Album {
   id: number;
@@ -23,19 +22,10 @@ interface Album {
   rating: string;
 }
 
-interface ApiResponse {
-  data?: Album[];
-  albums?: Album[];
-  // Add other possible response properties based on your API
-}
-
 const AlbumScreen = () => {
   const [isDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"collection" | "stats">("collection");
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const userName = "John Doe";
@@ -51,51 +41,52 @@ const AlbumScreen = () => {
     header: isDarkMode ? "bg-gray-800/80" : "bg-white/80",
   };
 
-  // Fetch albums from API
-  useEffect(() => {
-    const fetchAlbums = async () => {
-      try {
-        setLoading(true);
-        const response: ApiResponse = await albumService.getAllAlbums();
-        
-        // Handle different possible response structures
-        let albumsData: Album[] = [];
-        
-        if (Array.isArray(response)) {
-          // If response is directly an array
-          albumsData = response;
-        } else if (response.data && Array.isArray(response.data)) {
-          // If response has a data property that contains the array
-          albumsData = response.data;
-        } else if (response.albums && Array.isArray(response.albums)) {
-          // If response has an albums property that contains the array
-          albumsData = response.albums;
-        } else if (Array.isArray(response)) {
-          // If the response itself is the array
-          albumsData = response;
-        } else {
-          console.warn("Unexpected API response structure:", response);
-          albumsData = [];
-        }
-        
-        setAlbums(albumsData);
-        setError(null);
-      } catch (err) {
-        setError("Failed to fetch albums. Please try again later.");
-        console.error("Error fetching albums:", err);
-        setAlbums([]); // Ensure albums is always an array
-      } finally {
-        setLoading(false);
-      }
-    };
+  const albums: Album[] = [
+    {
+      id: 1,
+      title: "Midnight Melodies",
+      artist: "Luna Aurora",
+      genre: "Pop",
+      cost: 14.99,
+      releaseDate: "2024-09-15",
+      tracks: 12,
+      description: "A dreamy pop journey through midnight emotions and cosmic sounds.",
+      image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop",
+      color: "from-purple-500 to-pink-500",
+      rating: "4.5",
+    },
+    {
+      id: 2,
+      title: "City Lights",
+      artist: "Neon Dreams",
+      genre: "Electronic",
+      cost: 12.49,
+      releaseDate: "2024-07-10",
+      tracks: 10,
+      description: "Pulsing synth beats and vibrant energy inspired by neon-lit city nights.",
+      image: "https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?w=400&h=400&fit=crop",
+      color: "from-cyan-500 to-red-500",
+      rating: "4.8",
+    },
+    {
+      id: 3,
+      title: "Acoustic Souls",
+      artist: "Sarah Harmony",
+      genre: "Folk",
+      cost: 11.99,
+      releaseDate: "2024-06-21",
+      tracks: 9,
+      description: "Heartfelt acoustic melodies that capture love, loss, and life's simplicity.",
+      image: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop",
+      color: "from-emerald-500 to-teal-500",
+      rating: "4.2",
+    },
+  ];
 
-    fetchAlbums();
-  }, []);
-
-  // Safe reduce with fallback to empty array
-  const totalSpent = albums?.reduce((sum, album) => sum + (album.cost || 0), 0) || 0;
+  const totalSpent = albums.reduce((sum, album) => sum + album.cost, 0);
 
   const handleAlbumClick = (album: Album) => {
+    // All albums go to the same route
     navigate(`/details1`, { state: { album } });
   };
 
@@ -224,63 +215,29 @@ const AlbumScreen = () => {
                   </div>
                 </div>
 
-                {/* Loading State */}
-                {loading && (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                  </div>
-                )}
-
-                {/* Error State */}
-                {error && (
-                  <div className="flex justify-center items-center py-12">
-                    <div className={`text-center ${themeClasses.text}`}>
-                      <p className="text-lg font-semibold">{error}</p>
-                      <button
-                        onClick={() => window.location.reload()}
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 {/* Album Grid */}
-                {!loading && !error && albums && albums.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {albums.map((album) => (
-                      <motion.div
-                        key={album.id}
-                        whileHover={{ scale: 1.02 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                        className={`cursor-pointer group relative overflow-hidden rounded-2xl ${themeClasses.card} border ${themeClasses.border} backdrop-blur-sm hover:shadow-2xl`}
-                        onClick={() => handleAlbumClick(album)}
-                      >
-                        <img
-                          src={album.image}
-                          alt={album.title}
-                          className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                        <div className="absolute bottom-4 left-4 text-white">
-                          <h3 className="text-lg font-bold">{album.title}</h3>
-                          <p className="text-sm opacity-80">{album.artist}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Empty State */}
-                {!loading && !error && (!albums || albums.length === 0) && (
-                  <div className="flex justify-center items-center py-12">
-                    <div className={`text-center ${themeClasses.text}`}>
-                      <p className="text-lg font-semibold">No albums found</p>
-                      <p className={themeClasses.textSecondary}>Your album collection is empty</p>
-                    </div>
-                  </div>
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {albums.map((album) => (
+                    <motion.div
+                      key={album.id}
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                      className={`cursor-pointer group relative overflow-hidden rounded-2xl ${themeClasses.card} border ${themeClasses.border} backdrop-blur-sm hover:shadow-2xl`}
+                      onClick={() => handleAlbumClick(album)}
+                    >
+                      <img
+                        src={album.image}
+                        alt={album.title}
+                        className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                      <div className="absolute bottom-4 left-4 text-white">
+                        <h3 className="text-lg font-bold">{album.title}</h3>
+                        <p className="text-sm opacity-80">{album.artist}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
