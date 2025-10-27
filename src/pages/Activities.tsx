@@ -1,13 +1,24 @@
-import { useState } from 'react';
-import { Play, Heart, Music, Clock, MoreVertical, Shuffle, Menu, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Sidebar from '../components/sidebar';
+import { useState } from "react";
+import {
+  Play,
+  Heart,
+  Music,
+  Clock,
+  Menu,
+  Pause,
+  Grid,
+  List,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import Sidebar from "../components/sidebar";
 
 export default function MusicActivitiesScreen() {
   const [likedAlbums, setLikedAlbums] = useState<number[]>([1, 3, 5]);
   const [hoveredAlbum, setHoveredAlbum] = useState<number | null>(null);
+  const [playingAlbum, setPlayingAlbum] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isDarkMode] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const userName = "John Doe";
 
@@ -23,30 +34,107 @@ export default function MusicActivitiesScreen() {
   };
 
   const visitedAlbums = [
-    { id: 1, title: 'Midnight Echoes', artist: 'Luna Wave', year: 2024, tracks: 12, duration: '45:23', color: 'from-purple-500 to-pink-500', lastPlayed: '2 hours ago' },
-    { id: 2, title: 'Electric Dreams', artist: 'Neon Rider', year: 2023, tracks: 10, duration: '38:15', color: 'from-blue-500 to-cyan-500', lastPlayed: '5 hours ago' },
-    { id: 3, title: 'Summer Waves', artist: 'The Coastals', year: 2024, tracks: 14, duration: '52:08', color: 'from-orange-500 to-yellow-500', lastPlayed: '1 day ago' },
-    { id: 4, title: 'Urban Pulse', artist: 'City Lights', year: 2023, tracks: 11, duration: '42:30', color: 'from-green-500 to-teal-500', lastPlayed: '2 days ago' },
-    { id: 5, title: 'Acoustic Sessions', artist: 'James River', year: 2024, tracks: 8, duration: '34:45', color: 'from-red-500 to-rose-500', lastPlayed: '3 days ago' },
-    { id: 6, title: 'Night Drive', artist: 'Retro Synth', year: 2023, tracks: 13, duration: '48:20', color: 'from-indigo-500 to-purple-500', lastPlayed: '4 days ago' },
-    { id: 7, title: 'Jazz Fusion', artist: 'The Quartet', year: 2024, tracks: 9, duration: '41:12', color: 'from-amber-500 to-orange-500', lastPlayed: '5 days ago' },
-    { id: 8, title: 'Digital Horizons', artist: 'Tech Beats', year: 2023, tracks: 15, duration: '56:33', color: 'from-cyan-500 to-blue-500', lastPlayed: '1 week ago' },
+    {
+      id: 1,
+      title: "Midnight Echoes",
+      artist: "Luna Wave",
+      year: 2024,
+      tracks: 12,
+      duration: "45:23",
+      color: "from-purple-500 to-pink-500",
+      lastPlayed: "2 hours ago",
+    },
+    {
+      id: 2,
+      title: "Electric Dreams",
+      artist: "Neon Rider",
+      year: 2023,
+      tracks: 10,
+      duration: "38:15",
+      color: "from-blue-500 to-cyan-500",
+      lastPlayed: "5 hours ago",
+    },
+    {
+      id: 3,
+      title: "Summer Waves",
+      artist: "The Coastals",
+      year: 2024,
+      tracks: 14,
+      duration: "52:08",
+      color: "from-orange-500 to-yellow-500",
+      lastPlayed: "1 day ago",
+    },
+    {
+      id: 4,
+      title: "Urban Pulse",
+      artist: "City Lights",
+      year: 2023,
+      tracks: 11,
+      duration: "42:30",
+      color: "from-green-500 to-teal-500",
+      lastPlayed: "2 days ago",
+    },
+    {
+      id: 5,
+      title: "Acoustic Sessions",
+      artist: "James River",
+      year: 2024,
+      tracks: 8,
+      duration: "34:45",
+      color: "from-red-500 to-rose-500",
+      lastPlayed: "3 days ago",
+    },
+    {
+      id: 6,
+      title: "Night Drive",
+      artist: "Retro Synth",
+      year: 2023,
+      tracks: 13,
+      duration: "48:20",
+      color: "from-indigo-500 to-purple-500",
+      lastPlayed: "4 days ago",
+    },
+    {
+      id: 7,
+      title: "Jazz Fusion",
+      artist: "The Quartet",
+      year: 2024,
+      tracks: 9,
+      duration: "41:12",
+      color: "from-amber-500 to-orange-500",
+      lastPlayed: "5 days ago",
+    },
+    {
+      id: 8,
+      title: "Digital Horizons",
+      artist: "Tech Beats",
+      year: 2023,
+      tracks: 15,
+      duration: "56:33",
+      color: "from-cyan-500 to-blue-500",
+      lastPlayed: "1 week ago",
+    },
   ];
 
   const toggleLike = (id: number) => {
-    setLikedAlbums(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    setLikedAlbums((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
+  const togglePlay = (id: number) => {
+    setPlayingAlbum(playingAlbum === id ? null : id);
+  };
+
   return (
-    <div className={`flex h-screen ${themeClasses.bg} relative transition-colors duration-300 overflow-hidden`}>
-      {/* Sidebar */}
+    <div
+      className={`flex h-screen ${themeClasses.bg} relative transition-colors duration-300 overflow-hidden`}
+    >
+      {/* SIDEBAR */}
       <div className="hidden lg:block fixed left-0 top-0 h-full z-40">
         <Sidebar />
       </div>
 
-      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -57,7 +145,6 @@ export default function MusicActivitiesScreen() {
         />
       )}
 
-      {/* Mobile Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 lg:hidden transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -66,166 +153,248 @@ export default function MusicActivitiesScreen() {
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
 
-      {/* MAIN AREA */}
+      {/* MAIN */}
       <div className="flex-1 flex flex-col h-full overflow-hidden lg:ml-[290px] pl-6 sm:pl-8">
-        {/* Header */}
+        {/* HEADER */}
         <header
           className={`${themeClasses.header} backdrop-blur-xl shadow-sm border-b ${themeClasses.border} px-4 sm:px-6 py-4 fixed top-0 left-0 lg:left-[270px] right-0 z-30`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className={`lg:hidden mr-4 p-2 rounded-xl ${
-                  isDarkMode ? "bg-gray-700" : "bg-slate-100/50"
-                } hover:bg-opacity-80 transition-all duration-200`}
+                className="lg:hidden mr-4 p-2 rounded-xl bg-slate-100/50 hover:bg-opacity-80"
               >
-                <Menu className={`w-5 h-5 ${themeClasses.textSecondary}`} />
+                <Menu className="w-5 h-5" />
               </button>
-              <div className="flex items-center space-x-3">
-                <span className={themeClasses.textSecondary}>Home</span>
-                <span className="text-slate-400">›</span>
-                <span className={`${themeClasses.text} font-medium`}>Music Activities</span>
-              </div>
+
+              <span className={themeClasses.textSecondary}>Home</span>
+              <span className="text-slate-400">›</span>
+              <span className={`${themeClasses.text} font-medium`}>
+                Music Activities
+              </span>
             </div>
 
-            {/* User Info */}
             <div className="flex items-center space-x-4">
-              <div className={`flex items-center space-x-3 pl-4 border-l ${themeClasses.border}`}>
+              <div className="flex items-center space-x-3 pl-4 border-l">
                 <div className="text-right hidden sm:block">
-                  <div className={`text-sm font-semibold ${themeClasses.text}`}>{userName}</div>
-                  <div className={`text-xs ${themeClasses.textSecondary}`}>Admin</div>
-                </div>
-                <div className="relative">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                    <span className="text-white font-semibold text-sm">
-                      {userName.split(" ").map((n) => n[0]).join("")}
-                    </span>
+                  <div className={`text-sm font-semibold ${themeClasses.text}`}>
+                    {userName}
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                  <div className={`text-xs ${themeClasses.textSecondary}`}>
+                    Admin
+                  </div>
                 </div>
-                <ChevronDown className={`w-4 h-4 ${themeClasses.textSecondary}`} />
+
+                <div className="relative w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold">
+                  {userName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </div>
               </div>
             </div>
           </div>
         </header>
 
-        {/* Scrollable content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth pt-[84px] pb-8 pr-4 sm:pr-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key="music-activities"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.35, ease: "easeInOut" }}
-              className="max-w-7xl mx-auto"
-            >
-              {/* Header */}
-              <div className="mb-12">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 mb-2">Recently Visited</h1>
-                    <p className="text-base sm:text-lg text-gray-600">Your album listening history</p>
-                  </div>
-                  <button className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-red-500 text-white rounded-full font-medium hover:bg-red-600 transition-all shadow-lg hover:shadow-xl">
-                    <Shuffle className="w-5 h-5" />
-                    <span className="hidden sm:inline">Shuffle All</span>
+        {/* CONTENT */}
+        <main className="flex-1 overflow-y-auto pt-24 pb-8 px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Page Title & Stats */}
+            <div className="mb-8">
+              <h1
+                className={`text-3xl sm:text-4xl font-bold ${themeClasses.text} mb-4`}
+              >
+                Music Activities
+              </h1>
+              <div className="flex flex-wrap gap-4 items-center justify-between">
+                <p className={themeClasses.textSecondary}>
+                  {visitedAlbums.length} albums • {likedAlbums.length} liked
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      viewMode === "grid"
+                        ? "bg-red-600 text-white"
+                        : `${themeClasses.card} ${themeClasses.text}`
+                    }`}
+                  >
+                    <Grid className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      viewMode === "list"
+                        ? "bg-red-600 text-white"
+                        : `${themeClasses.card} ${themeClasses.text}`
+                    }`}
+                  >
+                    <List className="w-5 h-5" />
                   </button>
                 </div>
-                
-                {/* Quick Stats Bar */}
-                <div className="flex items-center gap-4 sm:gap-8 text-sm text-gray-600 bg-white/60 backdrop-blur rounded-2xl px-4 sm:px-6 py-4 border border-red-100">
-                  <div className="flex items-center gap-2">
-                    <Music className="w-5 h-5 text-red-500" />
-                    <span><strong className="text-gray-800">{visitedAlbums.length}</strong> Albums</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-red-500" />
-                    <span><strong className="text-gray-800">6.5</strong> Hours</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-red-500" />
-                    <span><strong className="text-gray-800">{likedAlbums.length}</strong> Favorites</span>
-                  </div>
-                </div>
               </div>
+            </div>
 
-              {/* Albums Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            {/* Albums Grid/List */}
+          {/* Albums Grid/List */}
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {visitedAlbums.map((album) => (
-                  <div
+                  <motion.div
                     key={album.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`${themeClasses.card} backdrop-blur-xl rounded-lg overflow-hidden border ${themeClasses.border} shadow hover:shadow-lg transition-shadow group cursor-pointer`}
                     onMouseEnter={() => setHoveredAlbum(album.id)}
                     onMouseLeave={() => setHoveredAlbum(null)}
-                    className="group bg-white/70 backdrop-blur rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-red-100 hover:border-red-300 hover:-translate-y-2"
                   >
-                    {/* Album Cover */}
-                    <div className="relative aspect-square overflow-hidden">
-                      <div className={`absolute inset-0 bg-gradient-to-br ${album.color} flex items-center justify-center`}>
-                        <Music className="w-16 sm:w-20 lg:w-24 h-16 sm:h-20 lg:h-24 text-white opacity-40" />
+                    <div className="relative aspect-square">
+                      <div
+                        className={`absolute inset-0 bg-linear-to-br ${album.color}`}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Music className="w-12 h-12 text-white/20" />
                       </div>
-                      
-                      {/* Overlay on Hover */}
-                      <div className={`absolute inset-0 bg-black/60 flex items-center justify-center gap-2 sm:gap-3 transition-opacity duration-300 ${
-                        hoveredAlbum === album.id ? 'opacity-100' : 'opacity-0'
-                      }`}>
-                        <button className="p-3 sm:p-4 bg-red-500 rounded-full hover:bg-red-600 transition-all hover:scale-110 shadow-xl">
-                          <Play className="w-6 sm:w-8 h-6 sm:h-8 text-white fill-white" />
+
+                      <AnimatePresence>
+                        {hoveredAlbum === album.id && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/30 flex items-center justify-center"
+                          >
+                            <button
+                              onClick={() => togglePlay(album.id)}
+                              className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+                            >
+                              {playingAlbum === album.id ? (
+                                <Pause className="w-5 h-5 text-gray-900" />
+                              ) : (
+                                <Play className="w-5 h-5 text-gray-900 ml-0.5" />
+                              )}
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <button
+                        onClick={() => toggleLike(album.id)}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors"
+                      >
+                        <Heart
+                          className={`w-4 h-4 ${
+                            likedAlbums.includes(album.id)
+                              ? "fill-red-500 text-red-500"
+                              : "text-white"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="p-3">
+                      <h3
+                        className={`font-semibold text-sm ${themeClasses.text} mb-0.5 truncate`}
+                      >
+                        {album.title}
+                      </h3>
+                      <p
+                        className={`text-xs ${themeClasses.textSecondary} mb-2 truncate`}
+                      >
+                        {album.artist}
+                      </p>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={themeClasses.textSecondary}>
+                          {album.tracks} tracks
+                        </span>
+                        <span className={themeClasses.textSecondary}>
+                          {album.duration}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {visitedAlbums.map((album) => (
+                  <motion.div
+                    key={album.id}
+                    layout
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`${themeClasses.card} backdrop-blur-xl rounded-2xl border ${themeClasses.border} shadow-lg hover:shadow-xl transition-all duration-300 group`}
+                    onMouseEnter={() => setHoveredAlbum(album.id)}
+                    onMouseLeave={() => setHoveredAlbum(null)}
+                  >
+                    <div className="flex items-center p-4 gap-4">
+                      <div className="relative w-20 h-20 shrink-0 rounded-xl overflow-hidden">
+                        <div
+                          className={`absolute inset-0 bg-linear-to-br ${album.color} opacity-90`}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Music className="w-10 h-10 text-white/30" />
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className={`font-bold text-lg ${themeClasses.text}`}
+                        >
+                          {album.title}
+                        </h3>
+                        <p className={`text-sm ${themeClasses.textSecondary}`}>
+                          {album.artist} • {album.year}
+                        </p>
+                      </div>
+
+                      <div className="hidden sm:flex items-center gap-6 text-sm">
+                        <div className={themeClasses.textSecondary}>
+                          {album.tracks} tracks
+                        </div>
+                        <div
+                          className={`flex items-center gap-1 ${themeClasses.textSecondary}`}
+                        >
+                          <Clock className="w-4 h-4" />
+                          {album.duration}
+                        </div>
+                        <div className={themeClasses.textSecondary}>
+                          {album.lastPlayed}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => togglePlay(album.id)}
+                          className="p-3 rounded-full bg-red-600 hover:bg-red-700 transition-all"
+                        >
+                          {playingAlbum === album.id ? (
+                            <Pause className="w-5 h-5 text-white" />
+                          ) : (
+                            <Play className="w-5 h-5 text-white ml-0.5" />
+                          )}
                         </button>
                         <button
                           onClick={() => toggleLike(album.id)}
-                          className={`p-3 sm:p-4 rounded-full transition-all hover:scale-110 shadow-xl ${
-                            likedAlbums.includes(album.id)
-                              ? 'bg-red-500 text-white'
-                              : 'bg-white/90 text-gray-700'
-                          }`}
+                          className={`p-3 rounded-full ${themeClasses.card} hover:bg-opacity-80 transition-all`}
                         >
                           <Heart
-                            className="w-5 sm:w-6 h-5 sm:h-6"
-                            fill={likedAlbums.includes(album.id) ? 'currentColor' : 'none'}
+                            className={`w-5 h-5 ${
+                              likedAlbums.includes(album.id)
+                                ? "fill-red-500 text-red-500"
+                                : themeClasses.textSecondary
+                            }`}
                           />
                         </button>
                       </div>
-
-                      {/* Last Played Badge */}
-                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 bg-black/70 backdrop-blur text-white text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                        {album.lastPlayed}
-                      </div>
                     </div>
-
-                    {/* Album Info */}
-                    <div className="p-4 sm:p-5">
-                      <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-1 truncate group-hover:text-red-600 transition-colors">
-                        {album.title}
-                      </h3>
-                      <p className="text-gray-600 mb-3 truncate text-sm sm:text-base">{album.artist}</p>
-                      
-                      <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500 flex-wrap gap-1">
-                        <span>{album.year}</span>
-                        <span>•</span>
-                        <span>{album.tracks} tracks</span>
-                        <span>•</span>
-                        <span>{album.duration}</span>
-                      </div>
-                    </div>
-
-                    {/* More Options */}
-                    <button className="absolute top-3 sm:top-4 left-3 sm:left-4 p-2 bg-white/90 backdrop-blur rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white">
-                      <MoreVertical className="w-4 sm:w-5 h-4 sm:h-5 text-gray-700" />
-                    </button>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-
-              {/* Load More */}
-              <div className="mt-8 sm:mt-12 text-center">
-                <button className="px-6 sm:px-8 py-3 sm:py-4 bg-white/70 backdrop-blur text-gray-700 rounded-full font-medium hover:bg-white transition-all shadow-lg hover:shadow-xl border border-red-100">
-                  Load More Albums
-                </button>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+            )}
+          </div>
         </main>
       </div>
     </div>

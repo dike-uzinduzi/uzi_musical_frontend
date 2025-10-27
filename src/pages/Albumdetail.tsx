@@ -7,11 +7,15 @@ import {
   Heart,
   Share2,
   MoreHorizontal,
+  Clock,
+  Disc3,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Sidebar from "../components/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
 import trackService from "../services/tracks_service";
+// import cover from "../assets/replacementcover/cover3.jpg";
+import cover2 from "../assets/replacementcover/cover2.jpg";
 
 interface Album {
   _id: string;
@@ -72,6 +76,7 @@ const AlbumDetailScreen = () => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const location = useLocation();
   const album = location.state?.album as Album;
@@ -89,7 +94,6 @@ const AlbumDetailScreen = () => {
     header: isDarkMode ? "bg-gray-800/80" : "bg-white/80",
   };
 
-  // Helper function to format duration from milliseconds to MM:SS
   const formatDuration = (durationMs: number): string => {
     const totalSeconds = Math.floor(durationMs / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -97,7 +101,6 @@ const AlbumDetailScreen = () => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  // Helper function to get artist name
   const getArtistName = (): string => {
     if (typeof album?.artist === "object" && album.artist?.name) {
       return album.artist.name;
@@ -105,7 +108,6 @@ const AlbumDetailScreen = () => {
     return "Unknown Artist";
   };
 
-  // Helper function to get genre name
   const getGenreName = (): string => {
     if (typeof album?.genre === "object" && album.genre?.name) {
       return album.genre.name;
@@ -113,23 +115,31 @@ const AlbumDetailScreen = () => {
     return "Unknown Genre";
   };
 
-  // Fetch tracks using the track service
+  const toggleLike = (trackId: string) => {
+    setLikedTracks((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(trackId)) {
+        newSet.delete(trackId);
+      } else {
+        newSet.add(trackId);
+      }
+      return newSet;
+    });
+  };
+
   useEffect(() => {
     const fetchTracks = async () => {
       try {
         setLoading(true);
         console.log("🔍 Fetching tracks for album ID:", album._id);
 
-        // Fetch tracks by album ID instead of getting all tracks
         const response = await trackService.getTracksByAlbumId(album._id);
 
         console.log("✅ Tracks fetched successfully:", response);
         console.log("📊 Number of tracks:", response.tracks?.length);
 
-        // Extract the tracks array from the response
         const tracksData = response.tracks || [];
 
-        // Sort by track number
         const sortedTracks = tracksData.sort((a: Track, b: Track) => {
           if (a.trackNumber && b.trackNumber) {
             return a.trackNumber - b.trackNumber;
@@ -218,45 +228,47 @@ const AlbumDetailScreen = () => {
       <div className="flex-1 flex flex-col h-full overflow-hidden lg:ml-[290px]">
         {/* Header */}
         <header
-          className={`${themeClasses.header} backdrop-blur-xl shadow-sm border-b ${themeClasses.border} px-4 sm:px-6 py-4 fixed top-0 left-0 lg:left-[270px] right-0 z-30`}
+          className={`${themeClasses.header} backdrop-blur-xl shadow-sm border-b ${themeClasses.border} px-3 sm:px-6 py-3 fixed top-0 left-0 lg:left-[270px] right-0 z-30`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className={`lg:hidden mr-4 p-2 rounded-xl ${
+                className={`lg:hidden p-2 rounded-lg ${
                   isDarkMode ? "bg-gray-700" : "bg-red-100/50"
-                } hover:bg-opacity-80 transition-all duration-200`}
+                } hover:bg-opacity-80 transition-all`}
               >
                 <Menu className={`w-5 h-5 ${themeClasses.textSecondary}`} />
               </button>
 
               <button
                 onClick={() => navigate("/albums")}
-                className={`mr-4 p-2 rounded-xl ${
+                className={`p-2 rounded-lg ${
                   isDarkMode ? "bg-gray-700" : "bg-red-100/50"
-                } hover:bg-opacity-80 transition-all duration-200`}
+                } hover:bg-opacity-80 transition-all`}
               >
                 <ArrowLeft
                   className={`w-5 h-5 ${themeClasses.textSecondary}`}
                 />
               </button>
 
-              <div className="flex items-center space-x-3">
+              <div className="hidden sm:flex items-center space-x-2 text-sm">
                 <span className={themeClasses.textSecondary}>Home</span>
                 <span className="text-red-300">›</span>
                 <span className={themeClasses.textSecondary}>Albums</span>
                 <span className="text-red-300">›</span>
-                <span className={`${themeClasses.text} font-medium`}>
+                <span
+                  className={`${themeClasses.text} font-medium truncate max-w-[150px]`}
+                >
                   {album.title}
                 </span>
               </div>
             </div>
 
             {/* User */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <div
-                className={`flex items-center space-x-3 pl-4 border-l ${themeClasses.border}`}
+                className={`flex items-center space-x-2 sm:space-x-3 pl-3 border-l ${themeClasses.border}`}
               >
                 <div className="text-right hidden sm:block">
                   <div className={`text-sm font-semibold ${themeClasses.text}`}>
@@ -268,19 +280,19 @@ const AlbumDetailScreen = () => {
                 </div>
 
                 <div className="relative">
-                  <div className="w-10 h-10 bg-linear-to-br from-red-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25">
-                    <span className="text-white font-semibold text-sm">
+                  <div className="w-9 h-9 bg-linear-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-white font-semibold text-xs">
                       {userName
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
                     </span>
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
                 </div>
 
                 <ChevronDown
-                  className={`w-4 h-4 ${themeClasses.textSecondary}`}
+                  className={`w-4 h-4 ${themeClasses.textSecondary} hidden sm:block`}
                 />
               </div>
             </div>
@@ -288,32 +300,51 @@ const AlbumDetailScreen = () => {
         </header>
 
         {/* Album Hero Section */}
-        <div className="pt-[84px] flex-1 overflow-y-auto">
+        <div className="pt-[60px] flex-1 overflow-y-auto">
           <div
-            className={`relative h-80 sm:h-96 bg-linear-to-r from-red-400 via-red-500 to-red-600 flex items-end`}
+            className={`relative bg-linear-to-b from-red-500 via-red-400 to-transparent pt-12 pb-6 px-4 sm:px-6 lg:px-8`}
+            style={{
+              background: `linear-gradient(180deg, rgba(239, 68, 68, 0.4) 0%, rgba(239, 68, 68, 0.1) 50%, transparent 100%)`,
+            }}
           >
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="relative z-10 w-full p-6 sm:p-8">
-              <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6">
-                <img
-                  src={album.cover_art || "/placeholder-album.png"}
-                  alt={album.title}
-                  className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl shadow-2xl object-cover"
-                />
-                <div className="flex-1 text-white">
-                  <p className="text-sm font-medium mb-2">ALBUM</p>
-                  <h1 className="text-4xl sm:text-6xl font-bold mb-4">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+                <div className="w-full sm:w-auto flex justify-center sm:block">
+                  <img
+                    src={album.cover_art || "/placeholder-album.png"}
+                    alt={album.title}
+                    className="w-44 h-44 sm:w-52 sm:h-52 rounded-lg shadow-2xl object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = cover2;
+                    }}
+                  />
+                </div>
+                <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
+                  <p
+                    className={`text-xs sm:text-sm font-semibold mb-2 ${themeClasses.text} uppercase tracking-wide`}
+                  >
+                    Album
+                  </p>
+                  <h1
+                    className={`text-3xl sm:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 ${themeClasses.text} leading-tight`}
+                  >
                     {album.title}
                   </h1>
-                  <p className="text-lg sm:text-xl opacity-90 mb-4">
-                    {getArtistName()}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span>{new Date(album.release_date).getFullYear()}</span>
-                    <span>•</span>
-                    <span>{album.track_count} tracks</span>
-                    <span>•</span>
-                    <span>{getGenreName()}</span>
+                  <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
+                    <span
+                      className={`text-sm font-semibold ${themeClasses.text}`}
+                    >
+                      {getArtistName()}
+                    </span>
+                    <span className={themeClasses.textSecondary}>•</span>
+                    <span className={`text-sm ${themeClasses.textSecondary}`}>
+                      {new Date(album.release_date).getFullYear()}
+                    </span>
+                    <span className={themeClasses.textSecondary}>•</span>
+                    <span className={`text-sm ${themeClasses.textSecondary}`}>
+                      {album.track_count}{" "}
+                      {album.track_count === 1 ? "song" : "songs"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -321,115 +352,169 @@ const AlbumDetailScreen = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="px-6 sm:px-8 py-6">
-            <div className="flex items-center gap-4">
-              <button className="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105">
-                <Play className="w-6 h-6" fill="currentColor" />
+          <div className="px-4 sm:px-6 lg:px-8 py-5 max-w-7xl mx-auto">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <button className="bg-red-500 hover:bg-red-600 text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center">
+                <Play
+                  className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5"
+                  fill="currentColor"
+                />
               </button>
               <button
-                className={`p-3 rounded-full border ${themeClasses.border} hover:bg-opacity-80 transition-all duration-200`}
+                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 ${themeClasses.border} hover:border-red-500 transition-all duration-200 hover:scale-105 flex items-center justify-center ${themeClasses.text}`}
               >
-                <Heart className={`w-6 h-6 ${themeClasses.text}`} />
+                <Heart className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
               <button
-                className={`p-3 rounded-full border ${themeClasses.border} hover:bg-opacity-80 transition-all duration-200`}
+                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 ${themeClasses.border} hover:border-red-500 transition-all duration-200 hover:scale-105 flex items-center justify-center ${themeClasses.text}`}
               >
-                <Share2 className={`w-6 h-6 ${themeClasses.text}`} />
+                <Share2 className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
               <button
-                className={`p-3 rounded-full border ${themeClasses.border} hover:bg-opacity-80 transition-all duration-200 ml-auto`}
+                className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 ${themeClasses.border} hover:border-red-500 transition-all duration-200 hover:scale-105 flex items-center justify-center ml-auto ${themeClasses.text}`}
               >
-                <MoreHorizontal className={`w-6 h-6 ${themeClasses.text}`} />
+                <MoreHorizontal className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
           </div>
 
           {/* Track List */}
-          <div className="px-6 sm:px-8 pb-8">
+          <div className="px-4 sm:px-6 lg:px-8 pb-6 max-w-7xl mx-auto">
             <div
-              className={`${themeClasses.card} backdrop-blur-sm border ${themeClasses.border} rounded-2xl overflow-hidden`}
+              className={`${themeClasses.card} backdrop-blur-sm rounded-xl overflow-hidden shadow-lg`}
             >
-              <div className={`p-6 border-b ${themeClasses.border}`}>
-                <h2 className={`text-2xl font-bold ${themeClasses.text}`}>
-                  Track List
-                </h2>
-                {loading && (
-                  <p className={`text-sm ${themeClasses.textSecondary} mt-2`}>
-                    Loading tracks...
-                  </p>
-                )}
-                {error && (
-                  <p className={`text-sm text-red-500 mt-2`}>{error}</p>
-                )}
+              {/* Header Row */}
+              <div
+                className={`px-4 py-3 border-b ${themeClasses.border} hidden sm:grid grid-cols-12 gap-4 text-xs font-medium ${themeClasses.textSecondary} uppercase tracking-wider`}
+              >
+                <div className="col-span-1 text-center">#</div>
+                <div className="col-span-6">Title</div>
+                <div className="col-span-4 hidden lg:block">Album</div>
+                <div className="col-span-1 flex justify-end items-center">
+                  <Clock className="w-4 h-4" />
+                </div>
               </div>
-              <div className="divide-y divide-red-200 dark:divide-red-700">
-                {tracks.length === 0 && !loading ? (
-                  <div className="p-8 text-center">
-                    <p className={themeClasses.textSecondary}>
-                      No tracks available for this album
+
+              {loading && (
+                <div className="p-8 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <Disc3
+                      className={`w-5 h-5 ${themeClasses.textSecondary} animate-spin`}
+                    />
+                    <p className={`text-sm ${themeClasses.textSecondary}`}>
+                      Loading tracks...
                     </p>
                   </div>
-                ) : (
-                  tracks.map((track) => (
-                    <div
-                      key={track._id}
-                      className="flex items-center justify-between p-4 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors duration-200"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span
-                          className={`w-8 text-center ${themeClasses.textSecondary}`}
-                        >
-                          {track.trackNumber || "-"}
-                        </span>
-                        <div>
-                          <h3 className={`font-medium ${themeClasses.text}`}>
-                            {track.title}
-                          </h3>
-                          <p
-                            className={`text-sm ${themeClasses.textSecondary}`}
-                          >
-                            {track.featuredArtists || getArtistName()}
-                          </p>
-                        </div>
-                      </div>
-                      <span className={themeClasses.textSecondary}>
+                </div>
+              )}
+
+              {error && (
+                <div className="p-8 text-center">
+                  <p className="text-sm text-red-500">{error}</p>
+                </div>
+              )}
+
+              {!loading && !error && tracks.length === 0 && (
+                <div className="p-8 text-center">
+                  <p className={themeClasses.textSecondary}>
+                    No tracks available for this album
+                  </p>
+                </div>
+              )}
+
+              {!loading &&
+                !error &&
+                tracks.map((track, index) => (
+                  <div
+                    key={track._id}
+                    className={`group px-4 py-2.5 sm:py-3 grid grid-cols-12 gap-2 sm:gap-4 items-center hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-colors cursor-pointer`}
+                  >
+                    {/* Track Number / Play Button */}
+                    <div className="col-span-1 flex items-center justify-center">
+                      <span
+                        className={`text-sm ${themeClasses.textSecondary} group-hover:hidden`}
+                      >
+                        {track.trackNumber || index + 1}
+                      </span>
+                      <Play
+                        className={`w-4 h-4 ${themeClasses.text} hidden group-hover:block`}
+                        fill="currentColor"
+                      />
+                    </div>
+
+                    {/* Track Info */}
+                    <div className="col-span-8 sm:col-span-6 min-w-0">
+                      <h3
+                        className={`font-medium ${themeClasses.text} truncate text-sm sm:text-base`}
+                      >
+                        {track.title}
+                      </h3>
+                      <p
+                        className={`text-xs sm:text-sm ${themeClasses.textSecondary} truncate`}
+                      >
+                        {track.featuredArtists || getArtistName()}
+                      </p>
+                    </div>
+
+                    {/* Album Name (Hidden on Mobile) */}
+                    <div className="col-span-4 hidden lg:block">
+                      <p
+                        className={`text-sm ${themeClasses.textSecondary} truncate`}
+                      >
+                        {album.title}
+                      </p>
+                    </div>
+
+                    {/* Duration & Like */}
+                    <div className="col-span-3 sm:col-span-1 flex items-center justify-end gap-2 sm:gap-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLike(track._id);
+                        }}
+                        className="hidden group-hover:block"
+                      >
+                        <Heart
+                          className={`w-4 h-4 transition-colors ${
+                            likedTracks.has(track._id)
+                              ? "fill-red-500 text-red-500"
+                              : `${themeClasses.textSecondary} hover:text-red-500`
+                          }`}
+                        />
+                      </button>
+                      <span
+                        className={`text-xs sm:text-sm ${themeClasses.textSecondary} tabular-nums`}
+                      >
                         {formatDuration(track.durationMs)}
                       </span>
                     </div>
-                  ))
-                )}
-              </div>
+                  </div>
+                ))}
             </div>
           </div>
 
           {/* Album Information */}
-          <div className="px-6 sm:px-8 pb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Left Column - Album Details */}
+          <div className="px-4 sm:px-6 lg:px-8 pb-8 max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {/* About Section */}
               <div
-                className={`${themeClasses.card} backdrop-blur-sm border ${themeClasses.border} rounded-2xl p-6`}
+                className={`${themeClasses.card} backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-lg`}
               >
-                <h3 className={`text-xl font-bold ${themeClasses.text} mb-4`}>
-                  Album Information
+                <h3
+                  className={`text-lg sm:text-xl font-bold ${themeClasses.text} mb-3 sm:mb-4`}
+                >
+                  About
                 </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className={themeClasses.textSecondary}>Title:</span>
-                    <span className={themeClasses.text}>{album.title}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className={themeClasses.textSecondary}>Artist:</span>
-                    <span className={themeClasses.text}>{getArtistName()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className={themeClasses.textSecondary}>Genre:</span>
-                    <span className={themeClasses.text}>{getGenreName()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className={themeClasses.textSecondary}>
-                      Release Date:
-                    </span>
-                    <span className={themeClasses.text}>
+                <p
+                  className={`text-sm leading-relaxed ${themeClasses.textSecondary} mb-4`}
+                >
+                  {album.description || "No description available."}
+                </p>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between py-1.5">
+                    <span className={themeClasses.textSecondary}>Released</span>
+                    <span className={`${themeClasses.text} font-medium`}>
                       {new Date(album.release_date).toLocaleDateString(
                         "en-US",
                         {
@@ -440,133 +525,81 @@ const AlbumDetailScreen = () => {
                       )}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className={themeClasses.textSecondary}>
-                      Total Tracks:
-                    </span>
-                    <span className={themeClasses.text}>
-                      {album.track_count}
+                  <div className="flex justify-between py-1.5">
+                    <span className={themeClasses.textSecondary}>Genre</span>
+                    <span className={`${themeClasses.text} font-medium`}>
+                      {getGenreName()}
                     </span>
                   </div>
                   {album.publisher && (
-                    <div className="flex justify-between">
-                      <span className={themeClasses.textSecondary}>
-                        Publisher:
-                      </span>
-                      <span className={themeClasses.text}>
+                    <div className="flex justify-between py-1.5">
+                      <span className={themeClasses.textSecondary}>Label</span>
+                      <span className={`${themeClasses.text} font-medium`}>
                         {album.publisher}
                       </span>
                     </div>
                   )}
-                  {album.affiliation && (
-                    <div className="flex justify-between">
-                      <span className={themeClasses.textSecondary}>
-                        Affiliation:
-                      </span>
-                      <span className={themeClasses.text}>
-                        {album.affiliation}
-                      </span>
-                    </div>
-                  )}
-                  {album.duration && (
-                    <div className="flex justify-between">
-                      <span className={themeClasses.textSecondary}>
-                        Duration:
-                      </span>
-                      <span className={themeClasses.text}>
-                        {formatDuration(album.duration)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className={themeClasses.textSecondary}>Status:</span>
-                    <span
-                      className={`${themeClasses.text} ${
-                        album.is_published
-                          ? "text-green-600"
-                          : "text-yellow-600"
-                      }`}
-                    >
-                      {album.is_published ? "Published" : "Unpublished"}
-                    </span>
-                  </div>
                 </div>
               </div>
 
-              {/* Right Column - Description & Credits */}
+              {/* Credits Section */}
               <div
-                className={`${themeClasses.card} backdrop-blur-sm border ${themeClasses.border} rounded-2xl p-6`}
+                className={`${themeClasses.card} backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-lg`}
               >
-                <h3 className={`text-xl font-bold ${themeClasses.text} mb-4`}>
-                  About this Album
+                <h3
+                  className={`text-lg sm:text-xl font-bold ${themeClasses.text} mb-3 sm:mb-4`}
+                >
+                  Credits
                 </h3>
-                <p className={`leading-relaxed ${themeClasses.text} mb-6`}>
-                  {album.description || "No description available."}
-                </p>
-
-                {(album.credits ||
-                  album.copyright_info ||
-                  tracks.some(
-                    (t) => t.producer || t.masteringEngineer || t.writer
-                  )) && (
-                  <div className="mt-6">
-                    <h4 className={`font-bold ${themeClasses.text} mb-3`}>
-                      Album Credits
-                    </h4>
-                    <div className="space-y-2 text-sm">
-                      {album.credits && (
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>
-                            Credits:
-                          </span>
-                          <span className={themeClasses.text}>
-                            {album.credits}
-                          </span>
-                        </div>
-                      )}
-                      {tracks.length > 0 && tracks[0].producer && (
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>
-                            Producer:
-                          </span>
-                          <span className={themeClasses.text}>
-                            {tracks[0].producer}
-                          </span>
-                        </div>
-                      )}
-                      {tracks.length > 0 && tracks[0].masteringEngineer && (
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>
-                            Mastered By:
-                          </span>
-                          <span className={themeClasses.text}>
-                            {tracks[0].masteringEngineer}
-                          </span>
-                        </div>
-                      )}
-                      {tracks.length > 0 && tracks[0].writer && (
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>
-                            Written By:
-                          </span>
-                          <span className={themeClasses.text}>
-                            {tracks[0].writer}
-                          </span>
-                        </div>
-                      )}
-                      {album.copyright_info && (
-                        <div className="flex justify-between">
-                          <span className={themeClasses.textSecondary}>
-                            Copyright:
-                          </span>
-                          <span className={themeClasses.text}>
-                            {album.copyright_info}
-                          </span>
-                        </div>
-                      )}
+                <div className="space-y-2 text-sm">
+                  {tracks.length > 0 && tracks[0].producer && (
+                    <div className="flex justify-between py-1.5">
+                      <span className={themeClasses.textSecondary}>
+                        Producer
+                      </span>
+                      <span className={`${themeClasses.text} font-medium`}>
+                        {tracks[0].producer}
+                      </span>
                     </div>
-                  </div>
-                )}
+                  )}
+                  {tracks.length > 0 && tracks[0].masteringEngineer && (
+                    <div className="flex justify-between py-1.5">
+                      <span className={themeClasses.textSecondary}>
+                        Mastered by
+                      </span>
+                      <span className={`${themeClasses.text} font-medium`}>
+                        {tracks[0].masteringEngineer}
+                      </span>
+                    </div>
+                  )}
+                  {tracks.length > 0 && tracks[0].mixingEngineer && (
+                    <div className="flex justify-between py-1.5">
+                      <span className={themeClasses.textSecondary}>
+                        Mixed by
+                      </span>
+                      <span className={`${themeClasses.text} font-medium`}>
+                        {tracks[0].mixingEngineer}
+                      </span>
+                    </div>
+                  )}
+                  {tracks.length > 0 && tracks[0].writer && (
+                    <div className="flex justify-between py-1.5">
+                      <span className={themeClasses.textSecondary}>
+                        Written by
+                      </span>
+                      <span className={`${themeClasses.text} font-medium`}>
+                        {tracks[0].writer}
+                      </span>
+                    </div>
+                  )}
+                  {album.copyright_info && (
+                    <div className="pt-3 mt-3 border-t border-red-200 dark:border-red-700">
+                      <span className={`text-xs ${themeClasses.textSecondary}`}>
+                        {album.copyright_info}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
