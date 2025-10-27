@@ -2,14 +2,41 @@ import axios from "axios";
 
 const API_URL = "https://uzi-muscal-backend.onrender.com/api/albums";
 
-// Get All Albums
+// ✅ Get All Albums
 const getAllAlbums = async () => {
-  const response = await axios.get(`${API_URL}`);
-  return response.data; 
+  try {
+    const response = await axios.get(`${API_URL}`);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error fetching all albums:", error.response?.data || error.message);
+    throw new Error(
+      error.response?.data?.message || "Failed to fetch albums. Please try again later."
+    );
+  }
+};
+
+// ✅ Get Album by ID (with Authorization header)
+const getAlbumById = async (albumId: string, token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/${albumId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "*/*",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error(`Error fetching album ${albumId}:`, error.response?.data || error.message);
+    throw new Error(
+      error.response?.data?.message ||
+        "Failed to fetch album details. Please try again later."
+    );
+  }
 };
 
 const albumService = {
   getAllAlbums,
+  getAlbumById,
 };
 
 export default albumService;
