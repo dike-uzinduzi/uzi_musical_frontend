@@ -4,15 +4,15 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import PaymentModal from "../components/home/payment";
 import trackService from "../services/tracks_service";
 import albumService from "../services/album_service";
-import cover2 from "../assets/replacementcover/cover3.jpg";
-import cover from "../assets/replacementcover/cover5.jpg";
+import cover2 from "../assets/replacementcover/cover6.png";
+import cover from "../assets/replacementcover/cover6.png";
 //plaques
 import goldPlaque from "../assets/plaques/gol.png";
 import silverPlaque from "../assets/plaques/sil.png";
 import emeraldPlaque from "../assets/plaques/gree.png";
 import sapphirePlaque from "../assets/plaques/blue.png";
 import crimsonPlaque from "../assets/plaques/red.png";
-import woodPlaque from "../assets/plaques/blue.png";
+import woodPlaque from "../assets/plaques/wodden.png";
 import thankYouPlaque from "../assets/plaques/sil.png";
 
 interface Track {

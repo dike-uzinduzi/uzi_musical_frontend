@@ -3,19 +3,18 @@ import {
   Menu,
   ChevronDown,
   ArrowLeft,
-  Play,
   Heart,
   Share2,
   MoreHorizontal,
   Clock,
   Disc3,
+  X,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../components/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
 import trackService from "../services/tracks_service";
-// import cover from "../assets/replacementcover/cover3.jpg";
-import cover2 from "../assets/replacementcover/cover2.jpg";
+import cover2 from "../assets/replacementcover/cover6.png";
 
 interface Album {
   _id: string;
@@ -77,11 +76,55 @@ const AlbumDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const album = location.state?.album as Album;
 
   const userName = "John Doe";
+
+  const [clickAnimations, setClickAnimations] = useState<
+    Array<{ id: string; x: number; y: number }>
+  >([]);
+
+  const handleLikeWithAnimation = (trackId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // Toggle like state
+    const isLiked = likedTracks.has(trackId);
+    setLikedTracks((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(trackId)) {
+        newSet.delete(trackId);
+      } else {
+        newSet.add(trackId);
+      }
+      return newSet;
+    });
+
+    // Only show animation when liking (not unliking)
+    if (!isLiked) {
+      // Create animation at click position
+      const rect = e.currentTarget.getBoundingClientRect();
+      const animationId = `${trackId}-${Date.now()}`;
+
+      setClickAnimations((prev) => [
+        ...prev,
+        {
+          id: animationId,
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        },
+      ]);
+
+      // Remove animation after it completes
+      setTimeout(() => {
+        setClickAnimations((prev) =>
+          prev.filter((anim) => anim.id !== animationId)
+        );
+      }, 1000);
+    }
+  };
 
   const themeClasses = {
     bg: isDarkMode
@@ -115,16 +158,23 @@ const AlbumDetailScreen = () => {
     return "Unknown Genre";
   };
 
-  const toggleLike = (trackId: string) => {
-    setLikedTracks((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(trackId)) {
-        newSet.delete(trackId);
-      } else {
-        newSet.add(trackId);
-      }
-      return newSet;
-    });
+
+  const handleTrackClick = (track: Track) => {
+    setSelectedTrack(track);
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Unknown";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return "Unknown";
+    }
   };
 
   useEffect(() => {
@@ -223,6 +273,272 @@ const AlbumDetailScreen = () => {
       >
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
+
+      {/* Track Detail Modal */}
+      <AnimatePresence>
+        {selectedTrack && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              onClick={() => setSelectedTrack(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-4xl md:max-h-[85vh] max-h-[90vh] z-50"
+            >
+              <div
+                className={`${themeClasses.card} backdrop-blur-xl rounded-2xl shadow-2xl h-full flex flex-col`}
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b border-red-200/50">
+                  <h2 className={`text-2xl font-bold ${themeClasses.text}`}>
+                    Track Details
+                  </h2>
+                  <button
+                    onClick={() => setSelectedTrack(null)}
+                    className={`p-2 rounded-full hover:bg-red-100/50 transition-colors ${themeClasses.text}`}
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                {/* Modal Content */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain max-h-[calc(95vh-80px)] md:max-h-[calc(90vh-80px)]">
+                  <div className="space-y-4 sm:space-y-6 pb-6">
+                    {/* Track Hero */}
+                    <div className="flex flex-col sm:flex-row gap-6">
+                      {selectedTrack.trackArt && (
+                        <img
+                          src={selectedTrack.trackArt}
+                          alt={selectedTrack.title}
+                          className="w-full sm:w-48 h-48 object-cover rounded-lg shadow-lg"
+                          onError={(e) => {
+                            e.currentTarget.src = cover2;
+                          }}
+                        />
+                      )}
+                      <div className="flex-1">
+                        <p
+                          className={`text-xs font-semibold ${themeClasses.textSecondary} uppercase tracking-wider mb-2`}
+                        >
+                          Track {selectedTrack.trackNumber || "N/A"}
+                        </p>
+                        <h3
+                          className={`text-3xl font-bold ${themeClasses.text} mb-2`}
+                        >
+                          {selectedTrack.title}
+                        </h3>
+                        <p className={`text-lg ${themeClasses.textSecondary}`}>
+                          {selectedTrack.featuredArtists || getArtistName()}
+                        </p>
+                        <div className="flex items-center gap-4 mt-4">
+                          <span
+                            className={`text-sm ${themeClasses.textSecondary}`}
+                          >
+                            {formatDuration(selectedTrack.durationMs)}
+                          </span>
+                          {selectedTrack.releaseDate && (
+                            <>
+                              <span className={themeClasses.textSecondary}>
+                                •
+                              </span>
+                              <span
+                                className={`text-sm ${themeClasses.textSecondary}`}
+                              >
+                                {formatDate(selectedTrack.releaseDate)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Track Description */}
+                    {selectedTrack.trackDescription && (
+                      <div
+                        className={`p-4 rounded-lg bg-red-50/50 border ${themeClasses.border}`}
+                      >
+                        <h4
+                          className={`text-sm font-semibold ${themeClasses.text} mb-2`}
+                        >
+                          About This Track
+                        </h4>
+                        <p
+                          className={`text-sm ${themeClasses.textSecondary} leading-relaxed`}
+                        >
+                          {selectedTrack.trackDescription}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Credits Section */}
+                    <div>
+                      <h4
+                        className={`text-lg font-bold ${themeClasses.text} mb-4`}
+                      >
+                        Credits
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {selectedTrack.producer && (
+                          <div
+                            className={`p-3 rounded-lg bg-white/50 border ${themeClasses.border}`}
+                          >
+                            <p
+                              className={`text-xs ${themeClasses.textSecondary} mb-1`}
+                            >
+                              Producer
+                            </p>
+                            <p
+                              className={`text-sm font-medium ${themeClasses.text}`}
+                            >
+                              {selectedTrack.producer}
+                            </p>
+                          </div>
+                        )}
+                        {selectedTrack.writer && (
+                          <div
+                            className={`p-3 rounded-lg bg-white/50 border ${themeClasses.border}`}
+                          >
+                            <p
+                              className={`text-xs ${themeClasses.textSecondary} mb-1`}
+                            >
+                              Writer
+                            </p>
+                            <p
+                              className={`text-sm font-medium ${themeClasses.text}`}
+                            >
+                              {selectedTrack.writer}
+                            </p>
+                          </div>
+                        )}
+                        {selectedTrack.mixingEngineer && (
+                          <div
+                            className={`p-3 rounded-lg bg-white/50 border ${themeClasses.border}`}
+                          >
+                            <p
+                              className={`text-xs ${themeClasses.textSecondary} mb-1`}
+                            >
+                              Mixing Engineer
+                            </p>
+                            <p
+                              className={`text-sm font-medium ${themeClasses.text}`}
+                            >
+                              {selectedTrack.mixingEngineer}
+                            </p>
+                          </div>
+                        )}
+                        {selectedTrack.masteringEngineer && (
+                          <div
+                            className={`p-3 rounded-lg bg-white/50 border ${themeClasses.border}`}
+                          >
+                            <p
+                              className={`text-xs ${themeClasses.textSecondary} mb-1`}
+                            >
+                              Mastering Engineer
+                            </p>
+                            <p
+                              className={`text-sm font-medium ${themeClasses.text}`}
+                            >
+                              {selectedTrack.masteringEngineer}
+                            </p>
+                          </div>
+                        )}
+                        {selectedTrack.backingVocals && (
+                          <div
+                            className={`p-3 rounded-lg bg-white/50 border ${themeClasses.border}`}
+                          >
+                            <p
+                              className={`text-xs ${themeClasses.textSecondary} mb-1`}
+                            >
+                              Backing Vocals
+                            </p>
+                            <p
+                              className={`text-sm font-medium ${themeClasses.text}`}
+                            >
+                              {selectedTrack.backingVocals}
+                            </p>
+                          </div>
+                        )}
+                        {selectedTrack.instrumentation && (
+                          <div
+                            className={`p-3 rounded-lg bg-white/50 border ${themeClasses.border}`}
+                          >
+                            <p
+                              className={`text-xs ${themeClasses.textSecondary} mb-1`}
+                            >
+                              Instrumentation
+                            </p>
+                            <p
+                              className={`text-sm font-medium ${themeClasses.text}`}
+                            >
+                              {selectedTrack.instrumentation}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Special Credits */}
+                    {selectedTrack.specialCredits && (
+                      <div
+                        className={`p-4 rounded-lg bg-red-50/50 border ${themeClasses.border}`}
+                      >
+                        <h4
+                          className={`text-sm font-semibold ${themeClasses.text} mb-2`}
+                        >
+                          Special Credits
+                        </h4>
+                        <p
+                          className={`text-sm ${themeClasses.textSecondary} leading-relaxed`}
+                        >
+                          {selectedTrack.specialCredits}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Album Info */}
+                    <div
+                      className={`p-4 rounded-lg bg-white/50 border ${themeClasses.border}`}
+                    >
+                      <h4
+                        className={`text-sm font-semibold ${themeClasses.text} mb-3`}
+                      >
+                        From the Album
+                      </h4>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={album.cover_art || "/placeholder-album.png"}
+                          alt={album.title}
+                          className="w-16 h-16 rounded object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = cover2;
+                          }}
+                        />
+                        <div>
+                          <p className={`font-medium ${themeClasses.text}`}>
+                            {album.title}
+                          </p>
+                          <p
+                            className={`text-sm ${themeClasses.textSecondary}`}
+                          >
+                            {getArtistName()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* MAIN AREA */}
       <div className="flex-1 flex flex-col h-full overflow-hidden lg:ml-[290px]">
@@ -354,12 +670,6 @@ const AlbumDetailScreen = () => {
           {/* Action Buttons */}
           <div className="px-4 sm:px-6 lg:px-8 py-5 max-w-7xl mx-auto">
             <div className="flex items-center gap-3 sm:gap-4">
-              <button className="bg-red-500 hover:bg-red-600 text-white w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 flex items-center justify-center">
-                <Play
-                  className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5"
-                  fill="currentColor"
-                />
-              </button>
               <button
                 className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 ${themeClasses.border} hover:border-red-500 transition-all duration-200 hover:scale-105 flex items-center justify-center ${themeClasses.text}`}
               >
@@ -427,19 +737,14 @@ const AlbumDetailScreen = () => {
                 tracks.map((track, index) => (
                   <div
                     key={track._id}
+                    onClick={() => handleTrackClick(track)}
                     className={`group px-4 py-2.5 sm:py-3 grid grid-cols-12 gap-2 sm:gap-4 items-center hover:bg-red-50/50 dark:hover:bg-red-900/10 transition-colors cursor-pointer`}
                   >
-                    {/* Track Number / Play Button */}
+                    {/* Track Number */}
                     <div className="col-span-1 flex items-center justify-center">
-                      <span
-                        className={`text-sm ${themeClasses.textSecondary} group-hover:hidden`}
-                      >
+                      <span className={`text-sm ${themeClasses.textSecondary}`}>
                         {track.trackNumber || index + 1}
                       </span>
-                      <Play
-                        className={`w-4 h-4 ${themeClasses.text} hidden group-hover:block`}
-                        fill="currentColor"
-                      />
                     </div>
 
                     {/* Track Info */}
@@ -468,19 +773,30 @@ const AlbumDetailScreen = () => {
                     {/* Duration & Like */}
                     <div className="col-span-3 sm:col-span-1 flex items-center justify-end gap-2 sm:gap-4">
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleLike(track._id);
-                        }}
-                        className="hidden group-hover:block"
+                        onClick={(e) => handleLikeWithAnimation(track._id, e)}
+                        className="hidden group-hover:block relative"
                       >
                         <Heart
-                          className={`w-4 h-4 transition-colors ${
+                          className={`w-4 h-4 transition-all ${
                             likedTracks.has(track._id)
-                              ? "fill-red-500 text-red-500"
+                              ? "fill-red-500 text-red-500 scale-110"
                               : `${themeClasses.textSecondary} hover:text-red-500`
                           }`}
                         />
+                        {clickAnimations
+                          .filter((anim) => anim.id.startsWith(track._id))
+                          .map((anim) => (
+                            <motion.div
+                              key={anim.id}
+                              initial={{ scale: 0, opacity: 1, y: 0 }}
+                              animate={{ scale: 2, opacity: 0, y: -30 }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                              className="absolute pointer-events-none"
+                              style={{ left: anim.x, top: anim.y }}
+                            >
+                              <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                            </motion.div>
+                          ))}
                       </button>
                       <span
                         className={`text-xs sm:text-sm ${themeClasses.textSecondary} tabular-nums`}
@@ -493,114 +809,83 @@ const AlbumDetailScreen = () => {
             </div>
           </div>
 
-          {/* Album Information */}
+          {/* Album Details Section */}
           <div className="px-4 sm:px-6 lg:px-8 pb-8 max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              {/* About Section */}
-              <div
-                className={`${themeClasses.card} backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-lg`}
-              >
-                <h3
-                  className={`text-lg sm:text-xl font-bold ${themeClasses.text} mb-3 sm:mb-4`}
-                >
-                  About
-                </h3>
-                <p
-                  className={`text-sm leading-relaxed ${themeClasses.textSecondary} mb-4`}
-                >
-                  {album.description || "No description available."}
-                </p>
+            <div
+              className={`${themeClasses.card} backdrop-blur-sm rounded-xl p-6 shadow-lg space-y-6`}
+            >
+              <h2 className={`text-2xl font-bold ${themeClasses.text}`}>
+                About This Album
+              </h2>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between py-1.5">
-                    <span className={themeClasses.textSecondary}>Released</span>
-                    <span className={`${themeClasses.text} font-medium`}>
-                      {new Date(album.release_date).toLocaleDateString(
-                        "en-US",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        }
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-1.5">
-                    <span className={themeClasses.textSecondary}>Genre</span>
-                    <span className={`${themeClasses.text} font-medium`}>
-                      {getGenreName()}
-                    </span>
-                  </div>
-                  {album.publisher && (
-                    <div className="flex justify-between py-1.5">
-                      <span className={themeClasses.textSecondary}>Label</span>
-                      <span className={`${themeClasses.text} font-medium`}>
-                        {album.publisher}
-                      </span>
-                    </div>
-                  )}
+              {album.description && (
+                <div>
+                  <h3
+                    className={`text-sm font-semibold ${themeClasses.text} mb-2`}
+                  >
+                    Description
+                  </h3>
+                  <p
+                    className={`text-sm ${themeClasses.textSecondary} leading-relaxed`}
+                  >
+                    {album.description}
+                  </p>
                 </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p className={`text-xs ${themeClasses.textSecondary} mb-1`}>
+                    Release Date
+                  </p>
+                  <p className={`text-sm font-medium ${themeClasses.text}`}>
+                    {formatDate(album.release_date)}
+                  </p>
+                </div>
+                <div>
+                  <p className={`text-xs ${themeClasses.textSecondary} mb-1`}>
+                    Genre
+                  </p>
+                  <p className={`text-sm font-medium ${themeClasses.text}`}>
+                    {getGenreName()}
+                  </p>
+                </div>
+                {album.publisher && (
+                  <div>
+                    <p className={`text-xs ${themeClasses.textSecondary} mb-1`}>
+                      Publisher
+                    </p>
+                    <p className={`text-sm font-medium ${themeClasses.text}`}>
+                      {album.publisher}
+                    </p>
+                  </div>
+                )}
+                {album.copyright_info && (
+                  <div>
+                    <p className={`text-xs ${themeClasses.textSecondary} mb-1`}>
+                      Copyright
+                    </p>
+                    <p className={`text-sm font-medium ${themeClasses.text}`}>
+                      {album.copyright_info}
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Credits Section */}
-              <div
-                className={`${themeClasses.card} backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-lg`}
-              >
-                <h3
-                  className={`text-lg sm:text-xl font-bold ${themeClasses.text} mb-3 sm:mb-4`}
-                >
-                  Credits
-                </h3>
-                <div className="space-y-2 text-sm">
-                  {tracks.length > 0 && tracks[0].producer && (
-                    <div className="flex justify-between py-1.5">
-                      <span className={themeClasses.textSecondary}>
-                        Producer
-                      </span>
-                      <span className={`${themeClasses.text} font-medium`}>
-                        {tracks[0].producer}
-                      </span>
-                    </div>
-                  )}
-                  {tracks.length > 0 && tracks[0].masteringEngineer && (
-                    <div className="flex justify-between py-1.5">
-                      <span className={themeClasses.textSecondary}>
-                        Mastered by
-                      </span>
-                      <span className={`${themeClasses.text} font-medium`}>
-                        {tracks[0].masteringEngineer}
-                      </span>
-                    </div>
-                  )}
-                  {tracks.length > 0 && tracks[0].mixingEngineer && (
-                    <div className="flex justify-between py-1.5">
-                      <span className={themeClasses.textSecondary}>
-                        Mixed by
-                      </span>
-                      <span className={`${themeClasses.text} font-medium`}>
-                        {tracks[0].mixingEngineer}
-                      </span>
-                    </div>
-                  )}
-                  {tracks.length > 0 && tracks[0].writer && (
-                    <div className="flex justify-between py-1.5">
-                      <span className={themeClasses.textSecondary}>
-                        Written by
-                      </span>
-                      <span className={`${themeClasses.text} font-medium`}>
-                        {tracks[0].writer}
-                      </span>
-                    </div>
-                  )}
-                  {album.copyright_info && (
-                    <div className="pt-3 mt-3 border-t border-red-200 dark:border-red-700">
-                      <span className={`text-xs ${themeClasses.textSecondary}`}>
-                        {album.copyright_info}
-                      </span>
-                    </div>
-                  )}
+              {album.credits && (
+                <div>
+                  <h3
+                    className={`text-sm font-semibold ${themeClasses.text} mb-2`}
+                  >
+                    Credits
+                  </h3>
+                  <p
+                    className={`text-sm ${themeClasses.textSecondary} leading-relaxed`}
+                  >
+                    {album.credits}
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

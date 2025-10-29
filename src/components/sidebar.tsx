@@ -9,12 +9,28 @@ import {
   Music2,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import logo from "../assets/logo.jpg";
+import logo from "../assets/logo text.png";
+import React from "react";
 
 const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
+  const [expandedItems, setExpandedItems] = React.useState<number[]>([]);
+
+  const toggleSubmenu = (index: number) => {
+    setExpandedItems((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
   const sidebarItems = [
     { icon: Home, label: "Home", path: "/home" },
-    { icon: Disc3, label: "Albums", path: "/albums" },
+    {
+      icon: Disc3,
+      label: "Albums",
+      path: "/albums",
+      submenu: [
+        { label: "All Albums", path: "/all_albums" },
+        { label: "My Albums", path: "/albums" },
+      ],
+    },
     { icon: Award, label: "Plaques", path: "/plaques" },
     { icon: Newspaper, label: "News and Updates", path: "/news" },
     { icon: Activity, label: "Activities", path: "/activities" },
@@ -76,47 +92,100 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
         </div>
 
         {/* Navigation */}
+        {/* Navigation */}
         <nav className="px-3 space-y-1 flex-1 overflow-y-auto pb-6">
           {sidebarItems.map((item, index) => {
             const IconComponent = item.icon;
+            const hasSubmenu = item.submenu && item.submenu.length > 0;
+            const isExpanded = expandedItems.includes(index);
+
             return (
-              <NavLink
-                key={index}
-                to={item.path}
-                className={({ isActive }) =>
-                  `group flex items-center px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                    isActive
-                      ? "text-white bg-linear-to-r from-red-600 to-red-500"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`
-                }
-                onClick={() => {
-                  if (window.innerWidth < 1024) {
-                    onClose();
+              <div key={index}>
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `group flex items-center px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? "text-white bg-linear-to-r from-red-600 to-red-500"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`
                   }
-                }}
-              >
-                {({ isActive }) => (
-                  <>
-                    {/* Icon */}
-                    <IconComponent
-                      className={`w-6 h-6 mr-4 transition-all duration-200 ${
-                        isActive
-                          ? "text-white"
-                          : "text-gray-600 group-hover:text-gray-900"
-                      }`}
-                    />
+                  onClick={(e) => {
+                    if (hasSubmenu) {
+                      e.preventDefault();
+                      toggleSubmenu(index);
+                    } else if (window.innerWidth < 1024) {
+                      onClose();
+                    }
+                  }}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {/* Icon */}
+                      <IconComponent
+                        className={`w-6 h-6 mr-4 transition-all duration-200 ${
+                          isActive
+                            ? "text-white"
+                            : "text-gray-600 group-hover:text-gray-900"
+                        }`}
+                      />
 
-                    {/* Label */}
-                    <span className="relative">{item.label}</span>
+                      {/* Label */}
+                      <span className="relative flex-1">{item.label}</span>
 
-                    {/* Background hover effect */}
-                    {!isActive && (
-                      <div className="absolute inset-0 rounded-lg bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10"></div>
-                    )}
-                  </>
+                      {/* Chevron for submenu */}
+                      {hasSubmenu && (
+                        <svg
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      )}
+
+                      {/* Background hover effect */}
+                      {!isActive && (
+                        <div className="absolute inset-0 rounded-lg bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200 -z-10"></div>
+                      )}
+                    </>
+                  )}
+                </NavLink>
+
+                {/* Submenu */}
+                {hasSubmenu && isExpanded && (
+                  <div className="ml-10 mt-1 space-y-1">
+                    {item.submenu.map((subitem, subIndex) => (
+                      <NavLink
+                        key={subIndex}
+                        to={subitem.path}
+                        className={({ isActive }) =>
+                          `block px-4 py-2 text-sm rounded-lg transition-all duration-200 ${
+                            isActive
+                              ? "text-red-600 bg-red-50 font-semibold"
+                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                          }`
+                        }
+                        onClick={() => {
+                          if (window.innerWidth < 1024) {
+                            onClose();
+                          }
+                        }}
+                      >
+                        {subitem.label}
+                      </NavLink>
+                    ))}
+                  </div>
                 )}
-              </NavLink>
+              </div>
             );
           })}
         </nav>

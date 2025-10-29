@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../components/sidebar";
 import { useNavigate } from "react-router-dom";
 import albumService from "../services/album_service";
-import cover from "../assets/replacementcover/cover3.jpg";
+import cover from "../assets/replacementcover/cover6.png";
 
 // ✅ Types
 interface Album {
