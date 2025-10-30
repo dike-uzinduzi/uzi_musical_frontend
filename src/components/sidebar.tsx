@@ -7,19 +7,36 @@ import {
   Settings,
   LogOut,
   Music2,
+  X,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import logo from "../assets/logo text.png";
 import React from "react";
 
 const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
   const [expandedItems, setExpandedItems] = React.useState<number[]>([]);
+  const [showLogoutModal, setShowLogoutModal] = React.useState(false);
+  const navigate = useNavigate();
 
   const toggleSubmenu = (index: number) => {
     setExpandedItems((prev) =>
       prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
     );
   };
+
+  const handleLogout = () => {
+    // Clear any authentication tokens/data
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    sessionStorage.clear();
+
+    // Close the modal
+    setShowLogoutModal(false);
+
+    // Navigate to landing page and replace history
+    navigate("/", { replace: true });
+  };
+
   const sidebarItems = [
     { icon: Home, label: "Home", path: "/home" },
     {
@@ -33,9 +50,9 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
     },
     { icon: Award, label: "Plaques", path: "/plaques" },
     { icon: Newspaper, label: "News and Updates", path: "/news" },
-    { icon: Activity, label: "Activities", path: "/activities" },
+    { icon: Activity, label: "Activities", path: "/activity" },
     { icon: Settings, label: "Profile", path: "/profile" },
-    { icon: LogOut, label: "Logout", path: "/logout" },
+    { icon: LogOut, label: "Logout", path: "#", isLogout: true },
   ];
 
   return (
@@ -46,6 +63,59 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
           className="fixed inset-0 bg-black/50 z-20 lg:hidden animate-fadeIn"
           onClick={onClose}
         />
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-slideUp">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">
+                Confirm Logout
+              </h3>
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <LogOut className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-gray-700 font-medium">
+                    Are you sure you want to logout?
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    You'll need to login again to access your account.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end space-x-3 p-6 bg-gray-50 rounded-b-2xl">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              >
+                No, Stay
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-6 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors duration-200 shadow-sm"
+              >
+                Yes, Logout
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Sidebar */}
@@ -92,7 +162,6 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
         </div>
 
         {/* Navigation */}
-        {/* Navigation */}
         <nav className="px-3 space-y-1 flex-1 overflow-y-auto pb-6">
           {sidebarItems.map((item, index) => {
             const IconComponent = item.icon;
@@ -105,17 +174,23 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
                   to={item.path}
                   className={({ isActive }) =>
                     `group flex items-center px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-                      isActive
+                      isActive && !item.isLogout
                         ? "text-white bg-linear-to-r from-red-600 to-red-500"
                         : "text-gray-600 hover:text-gray-900"
                     }`
                   }
                   onClick={(e) => {
-                    if (hasSubmenu) {
-                      e.preventDefault();
+                    e.preventDefault();
+
+                    if (item.isLogout) {
+                      setShowLogoutModal(true);
+                    } else if (hasSubmenu) {
                       toggleSubmenu(index);
-                    } else if (window.innerWidth < 1024) {
-                      onClose();
+                    } else {
+                      navigate(item.path);
+                      if (window.innerWidth < 1024) {
+                        onClose();
+                      }
                     }
                   }}
                 >
@@ -124,7 +199,7 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
                       {/* Icon */}
                       <IconComponent
                         className={`w-6 h-6 mr-4 transition-all duration-200 ${
-                          isActive
+                          isActive && !item.isLogout
                             ? "text-white"
                             : "text-gray-600 group-hover:text-gray-900"
                         }`}
@@ -227,6 +302,17 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
             to { opacity: 1; }
           }
           
+          @keyframes slideUp {
+            from { 
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to { 
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          
           @keyframes pulse-subtle {
             0%, 100% { opacity: 0.8; }
             50% { opacity: 1; }
@@ -234,6 +320,10 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
           
           .animate-fadeIn {
             animation: fadeIn 0.2s ease-out;
+          }
+          
+          .animate-slideUp {
+            animation: slideUp 0.3s ease-out;
           }
           
           .animate-pulse-subtle {

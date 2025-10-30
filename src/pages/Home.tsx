@@ -13,7 +13,7 @@ import Sidebar from "../components/sidebar";
 import { useNavigate } from "react-router-dom";
 import albumService from "../services/album_service";
 import defaultcover from "../assets/replacementcover/cover1.jpg";
-import cover from "../assets/replacementcover/cover3.jpg";
+import cover from "../assets/replacementcover/cover6.png";
 
 const HomeScreen = () => {
   const [isDarkMode] = useState(false);
@@ -460,10 +460,7 @@ const HomeScreen = () => {
                       : featuredAlbum.artist?.name}
                   </p>
 
-                  <div className="flex items-center space-x-4 mb-6">
-                  
-                    
-                  </div>
+                  <div className="flex items-center space-x-4 mb-6"></div>
                 </div>
               </div>
             </div>

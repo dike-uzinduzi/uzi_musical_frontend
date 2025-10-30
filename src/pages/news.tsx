@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Calendar,
   Clock,
@@ -12,13 +12,35 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../components/sidebar";
+import newsService from "../services/news_service";
+
+interface NewsItem {
+  _id: string;
+  category: string;
+  title: string;
+  description: string;
+  image_url?: string;
+  created_at: string;
+  expires_at: string;
+  is_published: boolean;
+  likes?: number;
+  comments?: number;
+}
+
+interface ApiResponse {
+  data?: NewsItem[];
+  news?: NewsItem[];
+}
 
 const MusicNewsScreen = () => {
   const [isDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
-  const [selectedNews, setSelectedNews] = useState<number | null>(null);
-  const [expandedNews, setExpandedNews] = useState<Set<number>>(new Set());
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [expandedNews, setExpandedNews] = useState<Set<string>>(new Set());
+  const [selectedNews, setSelectedNews] = useState<string | null>(null);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const userName = "John Doe";
 
@@ -33,94 +55,77 @@ const MusicNewsScreen = () => {
     header: isDarkMode ? "bg-gray-800/80" : "bg-white/80",
   };
 
-  const updates = [
-    {
-      id: 1,
-      type: "update",
-      text: "Luna Rivers just announced tour dates for Europe!",
-      time: "5 min ago",
-      relatedNewsId: 1,
-    },
-    {
-      id: 2,
-      type: "update",
-      text: "Breaking: New collaboration between The Resonance and DJ Stellar confirmed",
-      time: "23 min ago",
-      relatedNewsId: 2,
-    },
-    {
-      id: 3,
-      type: "update",
-      text: '"Summer Nights" music video hits 100M views',
-      time: "1 hour ago",
-      relatedNewsId: 3,
-    },
-  ];
+  const [updates, setUpdates] = useState<any[]>([]);
 
-  const newsItems = [
-    {
-      id: 1,
-      category: "Album Release",
-      title: 'New Album "Midnight Echoes" Drops Next Week',
-      artist: "Luna Rivers",
-      description:
-        "The highly anticipated fifth studio album features 12 tracks blending indie pop with electronic elements.",
-      fullContent:
-        'Luna Rivers has officially announced that her fifth studio album "Midnight Echoes" will be released next week across all major streaming platforms. The album features 12 carefully crafted tracks that showcase her evolution as an artist, blending indie pop sensibilities with cutting-edge electronic production. Collaborating with renowned producers and songwriters, Rivers has created what many are calling her most ambitious work yet. The lead single "Neon Dreams" has already garnered critical acclaim and millions of streams. Pre-orders are now available, and fans who purchase the deluxe edition will receive exclusive behind-the-scenes content and acoustic versions of select tracks.',
-      time: "2 hours ago",
-      image:
-        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&h=600&fit=crop",
-      likes: 1247,
-      comments: 89,
-    },
-    {
-      id: 2,
-      category: "Tour Announcement",
-      title: "World Tour 2025: Dates Revealed",
-      artist: "The Resonance",
-      description:
-        "Spanning 40 cities across 5 continents, tickets go on sale this Friday at 10 AM local time.",
-      fullContent:
-        "The Resonance has just unveiled the complete schedule for their highly anticipated World Tour 2025. The extensive tour will span 40 cities across 5 continents, starting in March and concluding in November. This marks the band's biggest tour to date, with stops in North America, Europe, Asia, Australia, and South America. Tickets will go on sale this Friday at 10 AM local time through official venues and authorized ticket sellers. VIP packages include meet-and-greet opportunities, exclusive merchandise, and premium seating. The band promises to debut new material from their upcoming album alongside fan favorites from their decade-long career.",
-      time: "5 hours ago",
-      image:
-        "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&h=600&fit=crop",
-      likes: 3421,
-      comments: 234,
-    },
-    {
-      id: 3,
-      category: "Trending Now",
-      title: 'Viral Hit "Summer Nights" Breaks Records',
-      artist: "Nova & The Stars",
-      description:
-        "The single has reached #1 in 23 countries and accumulated over 500M streams in just two weeks.",
-      fullContent:
-        'Nova & The Stars have achieved unprecedented success with their latest single "Summer Nights," which has shattered multiple streaming records. The track reached #1 in 23 countries simultaneously and has accumulated over 500 million streams in just two weeks since its release. The infectious summer anthem has dominated TikTok with over 2 million user-generated videos and has been featured in numerous playlists worldwide. Music critics praise the song\'s catchy melody and production quality, while fans celebrate its feel-good vibes. The band has announced plans for a special music video featuring fan submissions and celebrity cameos, set to premiere next month.',
-      time: "1 day ago",
-      image:
-        "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop",
-      likes: 5892,
-      comments: 412,
-    },
-    {
-      id: 4,
-      category: "Festival Update",
-      title: "Harmony Fest Announces Surprise Headliner",
-      artist: "Various Artists",
-      description:
-        "Mystery artist to close out the festival on Sunday night. Speculation is running wild among fans.",
-      fullContent:
-        "Harmony Fest organizers have sent the music community into a frenzy with the announcement of a surprise headliner for Sunday night's closing performance. While the identity remains under wraps, festival directors have dropped cryptic hints on social media, suggesting it's an artist who hasn't performed live in several years. Industry insiders speculate it could be one of several legendary acts, and ticket sales have surged following the announcement. The three-day festival already features an impressive lineup of over 50 artists across multiple stages. Early bird passes sold out within hours, and remaining tickets are expected to go quickly once the mystery headliner is revealed this week.",
-      time: "1 day ago",
-      image:
-        "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=600&fit=crop",
-      likes: 2156,
-      comments: 567,
-    },
-  ];
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        const response: ApiResponse | NewsItem[] = await newsService.getAllNews(
+          1,
+          10
+        );
 
-  const toggleLike = (id: number) => {
+        let newsData: NewsItem[] = [];
+
+        if (Array.isArray(response)) {
+          newsData = response;
+        } else if (Array.isArray(response.data)) {
+          newsData = response.data;
+        } else if (Array.isArray(response.news)) {
+          newsData = response.news;
+        } else {
+          console.warn("Unexpected response:", response);
+        }
+
+        setNewsItems(newsData);
+
+        // Generate updates from the latest news items
+        const latestUpdates = newsData.slice(0, 3).map((item) => ({
+          id: item._id,
+          type: item.category,
+          text: item.title,
+          time: getTimeAgo(item.created_at),
+          relatedNewsId: item._id,
+        }));
+        setUpdates(latestUpdates);
+
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching news:", err);
+        setError("Failed to fetch news. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 60) return `${seconds} sec ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? "s" : ""} ago`;
+  };
+
+  const scrollToNews = (newsId: string) => {
+    setSelectedNews(newsId);
+    const element = document.getElementById(`news-${newsId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => setSelectedNews(null), 2000);
+    }
+  };
+
+  const toggleLike = (id: string) => {
     setLikedPosts((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -132,16 +137,7 @@ const MusicNewsScreen = () => {
     });
   };
 
-  const scrollToNews = (newsId: number) => {
-    setSelectedNews(newsId);
-    const element = document.getElementById(`news-${newsId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => setSelectedNews(null), 2000);
-    }
-  };
-
-  const toggleExpand = (id: number) => {
+  const toggleExpand = (id: string) => {
     setExpandedNews((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -283,48 +279,88 @@ const MusicNewsScreen = () => {
               </div>
 
               {/* Live Updates */}
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4 px-1">
-                  <Clock className="w-4 h-4 text-red-500" />
-                  <h2 className="text-lg font-bold text-gray-900">
-                    Live Updates
-                  </h2>
+              {!loading && !error && updates.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-4 px-1">
+                    <Clock className="w-4 h-4 text-red-500" />
+                    <h2 className="text-lg font-bold text-gray-900">
+                      Live Updates
+                    </h2>
+                  </div>
+                  <div className="space-y-2">
+                    {updates.map((update) => (
+                      <button
+                        key={update.id}
+                        onClick={() => scrollToNews(update.relatedNewsId)}
+                        className="w-full flex items-start gap-3 p-4 bg-white rounded-2xl hover:shadow-md transition-all text-left group"
+                      >
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 shrink-0"></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-gray-800 text-sm sm:text-base font-medium group-hover:text-red-600 transition-colors">
+                            {update.text}
+                          </p>
+                          <span className="text-xs text-gray-500 mt-0.5 block">
+                            {update.time}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  {updates.map((update) => (
-                    <button
-                      key={update.id}
-                      onClick={() => scrollToNews(update.relatedNewsId)}
-                      className="w-full flex items-start gap-3 p-4 bg-white rounded-2xl hover:shadow-md transition-all text-left group"
-                    >
-                      <div className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 shrink-0"></div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-gray-800 text-sm sm:text-base font-medium group-hover:text-red-600 transition-colors">
-                          {update.text}
-                        </p>
-                        <span className="text-xs text-gray-500 mt-0.5 block">
-                          {update.time}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+              )}
+
+              {/* Loading State */}
+              {loading && (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <div className="w-12 h-12 border-4 border-red-200 border-t-red-600 rounded-full animate-spin mb-4" />
+                  <p className="text-gray-600">Loading news...</p>
                 </div>
-              </div>
+              )}
+
+              {/* Error State */}
+              {error && (
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Flame className="w-8 h-8 text-red-600" />
+                  </div>
+                  <p className="text-red-600 font-medium">{error}</p>
+                </div>
+              )}
+
+              {/* News Feed */}
+              {!loading && !error && newsItems.length > 0 && (
+                <div className="space-y-6 pb-8">
+                  {/* existing news feed code */}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {!loading && !error && newsItems.length === 0 && (
+                <div className="text-center py-20">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Flame className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-600 font-medium">No news available</p>
+                </div>
+              )}
 
               {/* News Feed */}
               <div className="space-y-6 pb-8">
                 {newsItems.map((item) => (
                   <div
-                    key={item.id}
-                    id={`news-${item.id}`}
+                    key={item._id}
+                    id={`news-${item._id}`}
                     className={`bg-white rounded-3xl overflow-hidden hover:shadow-lg transition-all duration-300 ${
-                      selectedNews === item.id ? "ring-2 ring-red-400" : ""
+                      selectedNews === item._id
                     }`}
                   >
                     {/* Image */}
                     <div className="relative aspect-video sm:aspect-21/9 overflow-hidden">
                       <img
-                        src={item.image}
+                        src={
+                          item.image_url ||
+                          "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&h=600&fit=crop"
+                        }
                         alt={item.title}
                         className="w-full h-full object-cover"
                       />
@@ -343,10 +379,10 @@ const MusicNewsScreen = () => {
                     <div className="p-5 sm:p-6">
                       <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 mb-3">
                         <Calendar className="w-3.5 h-3.5" />
-                        <span>{item.time}</span>
+                        <span>{item.category}</span>
                         <span>•</span>
                         <span className="text-red-600 font-medium">
-                          {item.artist}
+                          {item.created_at}
                         </span>
                       </div>
 
@@ -358,10 +394,10 @@ const MusicNewsScreen = () => {
                         {item.description}
                       </p>
 
-                      {expandedNews.has(item.id) && (
+                      {expandedNews.has(item._id) && (
                         <div className="mb-4 p-4 bg-red-50 rounded-xl">
                           <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
-                            {item.fullContent}
+                            {item.description}
                           </p>
                         </div>
                       )}
@@ -370,20 +406,20 @@ const MusicNewsScreen = () => {
                       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                         <div className="flex items-center gap-5">
                           <button
-                            onClick={() => toggleLike(item.id)}
+                            onClick={() => toggleLike(item._id)}
                             className="flex items-center gap-1.5 group"
                           >
                             <Heart
                               className={`w-5 h-5 transition-all ${
-                                likedPosts.has(item.id)
+                                likedPosts.has(item._id)
                                   ? "fill-red-500 text-red-500"
                                   : "text-gray-400 group-hover:text-red-500"
                               }`}
                             />
                             <span className="text-sm text-gray-600 font-medium">
-                              {likedPosts.has(item.id)
+                              {/* {likedPosts.has(item._id)
                                 ? item.likes + 1
-                                : item.likes}
+                                : item.likes} */}
                             </span>
                           </button>
 
@@ -400,10 +436,10 @@ const MusicNewsScreen = () => {
                         </div>
 
                         <button
-                          onClick={() => toggleExpand(item.id)}
+                          onClick={() => toggleExpand(item._id)}
                           className="text-red-500 hover:text-red-600 font-medium text-sm"
                         >
-                          {expandedNews.has(item.id) ? "Less" : "More"}
+                          {expandedNews.has(item._id) ? "Less" : "More"}
                         </button>
                       </div>
                     </div>

@@ -15,6 +15,8 @@ import AllAlbumsScreen from "./pages/All_Albums";
 import Plaques from "./pages/Plaques";
 import ProfileScreen from "./pages/Profil";
 
+import Errorpage from "./pages/error";
+
 function App() {
   return (
     <ThemeProvider>
@@ -34,6 +36,8 @@ function App() {
           <Route path="/" element={<HomeScreen />} />
           <Route path="/plaques" element={<Plaques />} />
           <Route path="/profile" element={<ProfileScreen />} />
+
+          <Route path="/*" element={<Errorpage />} />
         </Routes>
       </Router>
     </ThemeProvider>

@@ -21,6 +21,7 @@ interface Album {
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
+  expires_at?: string;
 }
 
 interface ApiResponse {
@@ -43,6 +44,20 @@ const AlbumScreen = () => {
 
   const navigate = useNavigate();
   const userName = "John Doe";
+
+  const getTimeRemaining = (expiresAt: string) => {
+    const now = new Date().getTime();
+    const expiry = new Date(expiresAt).getTime();
+    const diff = expiry - now;
+
+    if (diff <= 0) return "Expired";
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    if (days > 0) return `${days}d ${hours}h left`;
+    return `${hours}h left`;
+  };
 
   const themeClasses = {
     bg: isDarkMode
@@ -307,6 +322,16 @@ const AlbumScreen = () => {
                                 ? album.artist
                                 : album.artist?.name ?? "Unknown Artist"}
                             </p>
+                            {album.track_count > 0 && (
+                              <p className="text-xs text-slate-500 mt-1">
+                                {album.track_count} tracks
+                              </p>
+                            )}
+                            {album.expires_at && (
+                              <p className="text-xs text-orange-600 font-semibold mt-1">
+                                {getTimeRemaining(album.expires_at)}
+                              </p>
+                            )}
                           </div>
                         </motion.div>
                       ))}
@@ -349,7 +374,17 @@ const AlbumScreen = () => {
                                 ? album.artist
                                 : album.artist?.name ?? "Unknown Artist"}
                             </p>
+                            {album.expires_at && (
+                              <p className="text-xs text-orange-600 font-semibold mt-1">
+                                ⏱️ {getTimeRemaining(album.expires_at)}
+                              </p>
+                            )}
                           </div>
+                          {album.track_count > 0 && (
+                            <div className="hidden sm:block text-xs text-slate-500">
+                              {album.track_count} tracks
+                            </div>
+                          )}
                           {album.track_count && (
                             <div className="hidden sm:block text-xs text-slate-500">
                               {album.track_count} tracks

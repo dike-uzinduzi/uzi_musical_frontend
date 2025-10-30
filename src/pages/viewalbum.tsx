@@ -106,6 +106,20 @@ const AlbumPage = () => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
   const [, setTracksError] = useState<string | null>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  //Debug
+  useEffect(() => {
+    console.log("=== DEBUGGING TOKEN ===");
+    console.log("localStorage.token:", localStorage.getItem("token"));
+    console.log("sessionStorage.token:", sessionStorage.getItem("token"));
+    console.log("localStorage.userLogin:", localStorage.getItem("userLogin"));
+    console.log(
+      "sessionStorage.userLogin:",
+      sessionStorage.getItem("userLogin")
+    );
+    console.log("All localStorage keys:", Object.keys(localStorage));
+  }, []);
 
   useEffect(() => {
     const fetchAlbum = async () => {
@@ -678,7 +692,21 @@ const AlbumPage = () => {
                     className="w-full h-1 bg-slate-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-600 [&::-webkit-slider-thumb]:cursor-pointer"
                   />
                   <button
-                    onClick={() => setIsPaymentModalOpen(true)}
+                    onClick={() => {
+                      // Check for token in userLogin object
+                      const userLogin =
+                        localStorage.getItem("userLogin") ||
+                        sessionStorage.getItem("userLogin");
+                      const token = userLogin
+                        ? JSON.parse(userLogin).token
+                        : null;
+
+                      if (!token) {
+                        setShowLoginPrompt(true);
+                      } else {
+                        setIsPaymentModalOpen(true);
+                      }
+                    }}
                     className="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-full transition text-sm uppercase tracking-wider"
                   >
                     Support Now
@@ -710,6 +738,34 @@ const AlbumPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 mb-3">
+              Account Required
+            </h3>
+            <p className="text-sm text-slate-600 mb-6">
+              To support the artist, please create an account or log in first.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="flex-1 py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-900 font-semibold rounded-full transition text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => navigate("/login")}
+                className="flex-1 py-2 px-4 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-full transition text-sm"
+              >
+                Go to Login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PaymentModal
         isOpen={isPaymentModalOpen}

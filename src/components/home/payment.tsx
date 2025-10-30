@@ -64,7 +64,7 @@ const PaymentModal = ({
   );
 
   const handleWhatsApp = (message: string) => {
-    const phone = "+263784351146";
+    const phone = "+263714219938";
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${phone}?text=${encodedMessage}`, "_blank");
   };
