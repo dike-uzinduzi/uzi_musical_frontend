@@ -8,7 +8,6 @@ import {
   Save,
   X,
   Camera,
-  Image as ImageIcon,
   IdCard,
   Smartphone,
   Flag,
@@ -19,6 +18,7 @@ import {
 import Sidebar from "../components/sidebar";
 import profileService from "../services/profile_service";
 import { createClient } from '@supabase/supabase-js';
+import uzii from "../assets/uzii.jpeg";
 
 // Initialize Supabase client with direct configurations
 const supabase = createClient(
@@ -117,7 +117,7 @@ const ProfileScreen = () => {
             role: data.userId?.role || "",
             joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : "",
             profile_pic: data.profilePicture || data.profile_pic || "",
-            cover_photo: data.cover_photo || "",
+            cover_photo: data.cover_photo || uzii, // Set default cover photo
           };
           
           console.log("🔄 Mapped profile:", mappedProfile);
@@ -126,7 +126,7 @@ const ProfileScreen = () => {
           setEditedProfile(mappedProfile);
         } else {
           console.warn("No profile data found in response");
-          // If no profile data, use localStorage data
+          // If no profile data, use localStorage data with default cover
           const fallbackProfile = {
             firstName: "",
             lastName: "",
@@ -142,14 +142,14 @@ const ProfileScreen = () => {
             role: loggedInUser?.user?.role || loggedInUser?.role || "",
             joinDate: "",
             profile_pic: "",
-            cover_photo: "",
+            cover_photo: uzii, // Set default cover photo
           };
           setProfile(fallbackProfile);
           setEditedProfile(fallbackProfile);
         }
       } catch (err) {
         console.error("Error fetching profile:", err);
-        // Use localStorage data as fallback
+        // Use localStorage data as fallback with default cover
         const fallbackProfile = {
           firstName: "",
           lastName: "",
@@ -165,7 +165,7 @@ const ProfileScreen = () => {
           role: loggedInUser?.user?.role || loggedInUser?.role || "",
           joinDate: "",
           profile_pic: "",
-          cover_photo: "",
+          cover_photo: uzii, // Set default cover photo
         };
         setProfile(fallbackProfile);
         setEditedProfile(fallbackProfile);
@@ -197,7 +197,6 @@ const ProfileScreen = () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-      
         .from('profile')
         .getPublicUrl(fileName);
 
@@ -228,7 +227,7 @@ const ProfileScreen = () => {
         address: editedProfile.address,
         country_of_residence: editedProfile.country_of_residence,
         profilePicture: editedProfile.profile_pic,
-        cover_photo: editedProfile.cover_photo,
+        cover_photo: editedProfile.cover_photo === uzii ? "" : editedProfile.cover_photo, // Don't save default cover to database
       };
       
       const response = await profileService.updateMyProfile(apiData);
@@ -252,7 +251,7 @@ const ProfileScreen = () => {
           role: data.userId?.role || profile.role,
           joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : profile.joinDate,
           profile_pic: data.profilePicture || data.profile_pic || "",
-          cover_photo: data.cover_photo || "",
+          cover_photo: data.cover_photo || uzii, // Use default if no cover photo
         };
         
         setProfile(mappedProfile);
@@ -377,22 +376,17 @@ const ProfileScreen = () => {
                 className={`${themeClasses.card} rounded-2xl overflow-hidden border ${themeClasses.border}`}
               >
                 <div className="relative h-48 ">
-                  {editedProfile.cover_photo ? (
-                    <img
-                      src={editedProfile.cover_photo}
-                      className="w-full h-full object-cover"
-                      alt="Cover"
-                      onError={(e) => {
-                        // If image fails to load, show default background
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                      <span className="text-white text-lg font-semibold">Cover Photo</span>
-                    </div>
-                  )}
+                  {/* Always show cover photo - either custom or default */}
+                  <img
+                    src={editedProfile.cover_photo || uzii}
+                    className="w-full h-full object-cover"
+                    alt="Cover"
+                    onError={(e) => {
+                      // If image fails to load, fallback to default cover
+                      const target = e.target as HTMLImageElement;
+                      target.src = uzii;
+                    }}
+                  />
 
                   <div className="absolute inset-0 bg-red-600/20 mix-blend-multiply pointer-events-none" />
 
@@ -406,14 +400,7 @@ const ProfileScreen = () => {
                         onChange={(e) => handleImageUpload(e, "cover_photo")}
                         disabled={uploading}
                       />
-                      <button
-                        onClick={() => coverFileRef.current?.click()}
-                        disabled={uploading}
-                        className="absolute bottom-3 right-3 bg-black/60 text-white px-3 py-1 rounded-lg text-xs flex gap-2 disabled:opacity-50"
-                      >
-                        <ImageIcon size={16} /> 
-                        {uploading ? "Uploading..." : "Change Cover"}
-                      </button>
+                      
                     </>
                   )}
                 </div>
