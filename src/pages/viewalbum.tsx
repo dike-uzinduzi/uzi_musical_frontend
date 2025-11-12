@@ -362,14 +362,14 @@ const AlbumPage = () => {
                 <span className="text-slate-600">
                   {formatDate(album.release_date)}
                 </span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-600">
+                {/* <span className="text-slate-400">•</span> */}
+                {/* <span className="text-slate-600">
                   {album.track_count} songs
-                </span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-600">
+                </span> */}
+                {/* <span className="text-slate-400">•</span> */}
+                {/* <span className="text-slate-600">
                   {formatAlbumDuration(album.duration)}
-                </span>
+                </span> */}
               </div>
             </div>
           </div>

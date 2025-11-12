@@ -49,7 +49,7 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
     },
     { icon: Award, label: "Plaques", path: "/plaques" },
     { icon: Newspaper, label: "News and Updates", path: "/news" },
-    { icon: Activity, label: "Activities", path: "/activity" },
+    // { icon: Activity, label: "Activities", path: "/activity" },
     { icon: Settings, label: "Profile", path: "/profile" },
     { icon: LogOut, label: "Logout", path: "#", isLogout: true },
   ];

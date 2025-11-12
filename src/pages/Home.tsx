@@ -8,9 +8,11 @@ import {
   Search,
   X,
   Eye,
+  User,
+  Edit3,
 } from "lucide-react";
 import Sidebar from "../components/sidebar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import albumService from "../services/album_service";
 import profileService from "../services/profile_service";
 import defaultcover from "../assets/replacementcover/cover1.jpg";
@@ -25,10 +27,11 @@ const HomeScreen = () => {
   const [filteredAlbums, setFilteredAlbums] = useState<Album[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // User state
   const [userProfile, setUserProfile] = useState<{
     firstName: string;
@@ -39,21 +42,26 @@ const HomeScreen = () => {
   } | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
+  // Profile dialog state
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [hasSkippedProfile, setHasSkippedProfile] = useState(false);
+
   type Album = {
     _id?: string;
     title: string;
     artist:
-      | {
-          _id: string;
-          name: string;
-        }
-      | string;
+    | {
+      _id: string;
+      name: string;
+    }
+    | string;
     genre:
-      | {
-          _id: string;
-          name: string;
-        }
-      | string;
+    | {
+      _id: string;
+      name: string;
+    }
+    | string;
     cover_art: string;
     release_date: string;
     track_count: number;
@@ -68,67 +76,34 @@ const HomeScreen = () => {
     color: string;
   };
 
-  // Fetch user profile on component mount
+  // Check if user has skipped profile creation in this session
+  useEffect(() => {
+    const skipped = sessionStorage.getItem('hasSkippedProfile');
+    if (skipped === 'true') {
+      setHasSkippedProfile(true);
+    }
+  }, []);
+
+  // Fetch user profile on component mount and when location changes
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         setProfileLoading(true);
-        
-        // First try to get profile data from profile service
-        try {
-          const profileData = await profileService.getMyProfile();
-          console.log("Profile data from service:", profileData);
-          
-          if (profileData && profileData.success && profileData.profile) {
-            const { profile } = profileData;
-            
-            // Extract user information from profile data - PRIORITIZE userName over firstName/lastName
-            const userInfo = {
-              firstName: profile.userName || profile.firstName || profile.userId?.userName || 'User',
-              lastName: '', // Don't use lastName, we want to display only the userName
-              profilePicture: profile.profilePicture || '',
-              role: profile.role || profile.userId?.role || '',
-              userName: profile.userName || profile.userId?.userName || 'user'
-            };
-            
-            console.log("Extracted user info:", userInfo);
-            setUserProfile(userInfo);
-            setProfileLoading(false);
-            return;
-          }
-        } catch (profileError) {
-          console.error("Error fetching profile from service:", profileError);
+        setProfileError(null);
+
+        // Don't show dialog if user has skipped in this session
+        if (hasSkippedProfile) {
+          console.log("User skipped profile creation, not showing dialog");
+          // Still try to load profile data but don't show dialog
+          await loadProfileData(false);
+          return;
         }
 
-        // Fallback to localStorage login data
-        const storedUser = localStorage.getItem("userLogin");
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          console.log("User data from localStorage:", userData);
-          
-          if (userData.user) {
-            setUserProfile({
-              firstName: userData.user.userName || 'User', // Use userName as firstName for display
-              lastName: '',
-              profilePicture: userData.user.profilePicture || '',
-              role: userData.user.role || '',
-              userName: userData.user.userName || 'User'
-            });
-            setProfileLoading(false);
-            return;
-          }
-        }
-
-        // Final fallback if both methods fail
-        setUserProfile({
-          firstName: 'User',
-          lastName: '',
-          profilePicture: '',
-          role: '',
-          userName: 'user'
-        });
+        // Try to load profile data and show dialog only if profile not found
+        await loadProfileData(true);
       } catch (error) {
         console.error("Error in user profile setup:", error);
+        setProfileError("Unexpected error loading profile");
         setUserProfile({
           firstName: 'User',
           lastName: '',
@@ -142,7 +117,131 @@ const HomeScreen = () => {
     };
 
     fetchUserProfile();
-  }, []);
+  }, [hasSkippedProfile, location.pathname]);
+
+  // Separate function to load profile data
+  const loadProfileData = async (showDialogOn404: boolean) => {
+    // First try to get profile data from profile service
+    try {
+      const profileData = await profileService.getMyProfile();
+      console.log("Profile data from service:", profileData);
+
+      if (profileData && profileData.success && profileData.profile) {
+        const { profile } = profileData;
+
+        // Extract user information from profile data - PRIORITIZE userName over firstName/lastName
+        const userInfo = {
+          firstName: profile.userName || profile.firstName || profile.userId?.userName || 'User',
+          lastName: '', // Don't use lastName, we want to display only the userName
+          profilePicture: profile.profilePicture || '',
+          role: profile.role || profile.userId?.role || '',
+          userName: profile.userName || profile.userId?.userName || 'user'
+        };
+
+        console.log("Extracted user info:", userInfo);
+        setUserProfile(userInfo);
+        return;
+      }
+    } catch (profileError: any) {
+      console.error("Error fetching profile from service:", profileError);
+
+      // Check if it's a 404 error (profile not found)
+      if (profileError.response?.status === 404 && showDialogOn404) {
+        console.log("Profile not found (404), showing dialog");
+        setProfileError("Profile not found");
+        setShowProfileDialog(true);
+
+        // Set temporary user data from localStorage for display
+        const storedUser = localStorage.getItem("userLogin");
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          console.log("User data from localStorage:", userData);
+
+          if (userData.user) {
+            setUserProfile({
+              firstName: userData.user.userName || 'User',
+              lastName: '',
+              profilePicture: userData.user.profilePicture || '',
+              role: userData.user.role || '',
+              userName: userData.user.userName || 'User'
+            });
+          }
+        }
+      } else if (profileError.response?.status !== 404) {
+        // For other errors, set a generic error
+        setProfileError("Failed to load profile");
+      }
+    }
+
+    // Fallback to localStorage login data if no profile found and no dialog shown
+    if (!showProfileDialog) {
+      const storedUser = localStorage.getItem("userLogin");
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        console.log("User data from localStorage:", userData);
+
+        if (userData.user) {
+          setUserProfile({
+            firstName: userData.user.userName || 'User',
+            lastName: '',
+            profilePicture: userData.user.profilePicture || '',
+            role: userData.user.role || '',
+            userName: userData.user.userName || 'User'
+          });
+          return;
+        }
+      }
+    }
+
+    // Final fallback if both methods fail
+    if (!showProfileDialog) {
+      setUserProfile({
+        firstName: 'User',
+        lastName: '',
+        profilePicture: '',
+        role: '',
+        userName: 'user'
+      });
+    }
+  };
+
+  // Handle navigation to profile page
+  const handleNavigateToProfile = () => {
+    setShowProfileDialog(false);
+    // Clear the skipped flag when user decides to create profile
+    sessionStorage.removeItem('hasSkippedProfile');
+    setHasSkippedProfile(false);
+    navigate('/profile');
+  };
+
+  // Handle close dialog (user chooses to skip profile creation)
+  const handleCloseDialog = () => {
+    setShowProfileDialog(false);
+    setProfileError(null);
+    // Store in sessionStorage that user skipped profile creation
+    sessionStorage.setItem('hasSkippedProfile', 'true');
+    setHasSkippedProfile(true);
+  };
+
+  // Check if we should show profile dialog when navigating to home
+  useEffect(() => {
+    // Only check if we're on the home page and haven't skipped in this session
+    if (location.pathname === '/' && !hasSkippedProfile && !profileLoading) {
+      const checkProfile = async () => {
+        try {
+          await profileService.getMyProfile();
+          // If we get here, profile exists, so no need to show dialog
+        } catch (error: any) {
+          if (error.response?.status === 404) {
+            // Profile doesn't exist, show dialog
+            setShowProfileDialog(true);
+          }
+        }
+      };
+      
+      checkProfile();
+    }
+  }, [location.pathname, hasSkippedProfile, profileLoading]);
 
   // Preload images for faster loading
   const preloadImages = useCallback((albums: Album[]) => {
@@ -168,10 +267,10 @@ const HomeScreen = () => {
   const totalArtists =
     albums?.length > 0
       ? new Set(
-          albums.map((album) =>
-            typeof album.artist === "string" ? album.artist : album.artist?.name
-          )
-        ).size
+        albums.map((album) =>
+          typeof album.artist === "string" ? album.artist : album.artist?.name
+        )
+      ).size
       : 0;
   const totalTracks =
     albums?.reduce((sum, album) => sum + (album.track_count || 0), 0) || 0;
@@ -414,6 +513,50 @@ const HomeScreen = () => {
     <div
       className={`flex h-screen ${themeClasses.bg} relative transition-colors duration-300`}
     >
+      {/* Profile Creation Dialog */}
+      {showProfileDialog && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`rounded-2xl p-6 max-w-md w-full ${themeClasses.card} backdrop-blur-lg border ${themeClasses.border} shadow-2xl`}>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-white" />
+              </div>
+              <h3 className={`text-xl font-bold ${themeClasses.text} mb-2`}>
+                Complete Your Profile
+              </h3>
+              <p className={`text-sm ${themeClasses.textSecondary}`}>
+                We noticed you don't have a profile yet. Create one to personalize your experience and access all features.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleNavigateToProfile}
+                className="w-full bg-linear-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-red-500/25"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Create Profile</span>
+              </button>
+
+              <button
+                onClick={handleCloseDialog}
+                className={`w-full py-3 rounded-xl font-medium ${themeClasses.textSecondary} hover:opacity-80 transition-opacity border ${themeClasses.border}`}
+              >
+                Maybe Later
+              </button>
+            </div>
+
+            {profileError && (
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-red-500 text-sm text-center">
+                  {profileError}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <Sidebar />
@@ -429,9 +572,8 @@ const HomeScreen = () => {
 
       {/* Mobile Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 lg:hidden transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 lg:hidden transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
@@ -445,9 +587,8 @@ const HomeScreen = () => {
             <div className="flex items-center">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className={`lg:hidden mr-4 p-2 rounded-xl ${
-                  isDarkMode ? "bg-gray-700" : "bg-slate-100/50"
-                } hover:bg-opacity-80 transition-all duration-200`}
+                className={`lg:hidden mr-4 p-2 rounded-xl ${isDarkMode ? "bg-gray-700" : "bg-slate-100/50"
+                  } hover:bg-opacity-80 transition-all duration-200`}
               >
                 <Menu className={`w-5 h-5 ${themeClasses.textSecondary}`} />
               </button>
@@ -519,7 +660,7 @@ const HomeScreen = () => {
                           }}
                         />
                       ) : null}
-                      
+
                       {/* Fallback avatar with initials - shown if no valid profile picture */}
                       {!isValidProfilePicture(userProfile.profilePicture) && (
                         <div className="w-10 h-10 bg-linear-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25">
@@ -528,7 +669,7 @@ const HomeScreen = () => {
                           </span>
                         </div>
                       )}
-                      
+
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full shadow-sm"></div>
                     </div>
                     <ChevronDown
@@ -635,9 +776,8 @@ const HomeScreen = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <div
-                            className={`text-xs sm:text-sm font-medium ${
-                              isDarkMode ? "text-gray-300" : "text-slate-600"
-                            }`}
+                            className={`text-xs sm:text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-slate-600"
+                              }`}
                           >
                             {metric.label}
                           </div>
@@ -664,9 +804,8 @@ const HomeScreen = () => {
                 </h2>
                 <p className={`text-sm ${themeClasses.textSecondary} mt-1`}>
                   {isSearching
-                    ? `${filteredAlbums.length} result${
-                        filteredAlbums.length !== 1 ? "s" : ""
-                      }`
+                    ? `${filteredAlbums.length} result${filteredAlbums.length !== 1 ? "s" : ""
+                    }`
                     : `${albums.length} albums available`}
                 </p>
               </div>

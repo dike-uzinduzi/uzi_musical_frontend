@@ -16,6 +16,7 @@ import Plaques from "./pages/Plaques";
 import ProfileScreen from "./pages/Profil";
 
 import Errorpage from "./pages/error";
+import VerifyEmailScreen from "./pages/verify_email";
 
 function App() {
   return (
@@ -32,7 +33,7 @@ function App() {
           <Route path="/activities" element={<MusicActivitiesScreen />} />
           <Route path="/details1" element={<AlbumDetailScreen />} />
           <Route path="/view" element={<AlbumPage />} />
-
+          <Route path="/verify-email" element={<VerifyEmailScreen />} />
           <Route path="/" element={<HomeScreen />} />
           <Route path="/plaques" element={<Plaques />} />
           <Route path="/profile" element={<ProfileScreen />} />
