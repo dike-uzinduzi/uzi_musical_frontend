@@ -1,32 +1,42 @@
 import axios from "axios";
 
-const USERS_API_URL = "https://uzi-muscal-backend.onrender.com/api/users";
 const AUTH_API_URL = "https://uzi-muscal-backend.onrender.com/api/auth";
+const USER_API_URL = "https://uzi-muscal-backend.onrender.com/api/users";
 
-// Register new user (uses /api/users)
-const register = async (userData: any) => {
+// ✅ Register (No Token)
+const register = async (userData: {
+  userName: string;
+  email: string;
+  password: string;
+  role: string;
+}) => {
   try {
-    // Get token stored from login
-    const token = localStorage.getItem("token");
-
     const payload = {
       userName: userData.userName,
       email: userData.email,
       password: userData.password,
       role: userData.role,
-      
     };
 
-    const headers: any = {
-      "Content-Type": "application/json",
-    };
+    // 👇 No token used here
+    const response = await axios.post(`${USER_API_URL}`, payload, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-    // Include Authorization header if token exists
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+    if (response.data) {
+      console.log("Registration Response Data:", response.data);
+
+      // Store full response in localStorage
+      localStorage.setItem("userRegister", JSON.stringify(response.data));
+
+      // Store token separately if available
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        console.log("Token stored:", response.data.token);
+      }
     }
-
-    const response = await axios.post(`${USERS_API_URL}`, payload, { headers });
 
     return response.data;
   } catch (error: any) {
@@ -35,23 +45,67 @@ const register = async (userData: any) => {
   }
 };
 
-// Verify email (uses /api/auth)
-const verifyEmail = async (verificationData: { email: string; code: string }) => {
+// ✅ Login
+const login = async (userData: { email: string; password: string }) => {
   try {
-    const response = await axios.post(
-      `${AUTH_API_URL}/verify-email`,
-      verificationData,
-      {
-        headers: { "Content-Type": "application/json" },
+    const response = await axios.post(`${AUTH_API_URL}/login`, userData);
+
+    if (response.data) {
+      console.log("Login Response Data:", response.data);
+
+      localStorage.setItem("userLogin", JSON.stringify(response.data));
+
+      // Store token separately if available
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        console.log("Token stored:", response.data.token);
       }
-    );
+
+      console.log("Login attempt with:", {
+        email: userData.email,
+        password: "***", // Mask password for security
+      });
+    }
 
     return response.data;
   } catch (error: any) {
-    console.error("Email verification Axios error:", error.response?.data || error.message);
+    console.error("Login Axios error:", error.response?.data || error.message);
     throw error;
   }
 };
 
-const userService = { register, verifyEmail };
+// ✅ Verify Email
+const verifyEmail = async (email: string, otp: string) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      throw new Error("No token found. Please log in first.");
+    }
+
+    const payload = { email, otp };
+
+    const response = await axios.post(`${AUTH_API_URL}/verify-email`, payload, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        "accept": "*/*",
+      },
+    });
+
+    console.log("Verify Email Response Data:", response.data);
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Verify Email Axios error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+const userService = {
+  register,
+  login,
+  verifyEmail,
+};
+
 export default userService;
