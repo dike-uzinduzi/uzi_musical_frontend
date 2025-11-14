@@ -472,7 +472,7 @@ export default function CreateAccountScreen() {
             <p className="text-gray-600 text-base">
               Already have an account?{" "}
               <a
-                href="/"
+                href="/login"
                 className="text-red-600 hover:text-red-700 font-semibold"
               >
                 Sign in

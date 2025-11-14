@@ -8,8 +8,6 @@ import {
   Search,
   X,
   Eye,
-  User,
-  Edit3,
 } from "lucide-react";
 import Sidebar from "../components/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -44,7 +42,7 @@ const HomeScreen = () => {
 
   // Profile dialog state
   const [showProfileDialog, setShowProfileDialog] = useState(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
+  const [, setProfileError] = useState<string | null>(null);
   const [hasSkippedProfile, setHasSkippedProfile] = useState(false);
 
   type Album = {
@@ -205,25 +203,6 @@ const HomeScreen = () => {
     }
   };
 
-  // Handle navigation to profile page
-  const handleNavigateToProfile = () => {
-    setShowProfileDialog(false);
-    // Clear the skipped flag when user decides to create profile
-    sessionStorage.removeItem('hasSkippedProfile');
-    setHasSkippedProfile(false);
-    navigate('/profile');
-  };
-
-  // Handle close dialog (user chooses to skip profile creation)
-  const handleCloseDialog = () => {
-    setShowProfileDialog(false);
-    setProfileError(null);
-    // Store in sessionStorage that user skipped profile creation
-    sessionStorage.setItem('hasSkippedProfile', 'true');
-    setHasSkippedProfile(true);
-  };
-
-  // Check if we should show profile dialog when navigating to home
   useEffect(() => {
     // Only check if we're on the home page and haven't skipped in this session
     if (location.pathname === '/' && !hasSkippedProfile && !profileLoading) {
@@ -513,49 +492,7 @@ const HomeScreen = () => {
     <div
       className={`flex h-screen ${themeClasses.bg} relative transition-colors duration-300`}
     >
-      {/* Profile Creation Dialog */}
-      {showProfileDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className={`rounded-2xl p-6 max-w-md w-full ${themeClasses.card} backdrop-blur-lg border ${themeClasses.border} shadow-2xl`}>
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-linear-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-white" />
-              </div>
-              <h3 className={`text-xl font-bold ${themeClasses.text} mb-2`}>
-                Complete Your Profile
-              </h3>
-              <p className={`text-sm ${themeClasses.textSecondary}`}>
-                We noticed you don't have a profile yet. Create one to personalize your experience and access all features.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={handleNavigateToProfile}
-                className="w-full bg-linear-to-r from-red-500 to-red-600 text-white py-3 rounded-xl font-semibold hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-red-500/25"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>Create Profile</span>
-              </button>
-
-              <button
-                onClick={handleCloseDialog}
-                className={`w-full py-3 rounded-xl font-medium ${themeClasses.textSecondary} hover:opacity-80 transition-opacity border ${themeClasses.border}`}
-              >
-                Maybe Later
-              </button>
-            </div>
-
-            {profileError && (
-              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <p className="text-red-500 text-sm text-center">
-                  {profileError}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
